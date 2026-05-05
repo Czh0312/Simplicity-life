@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hidden md:flex fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant flex-col px-4 py-8 z-40">
+    <h2 class="font-h2 text-h2 text-primary mb-8 px-4">Simplicity Life</h2>
+    <nav class="flex flex-col gap-2">
+        <a href="/" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-body-md text-body-md no-underline"><span class="material-symbols-outlined">home</span> <span data-i18n="nav.home">Home</span></a>
+        <a href="/add" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-body-md text-body-md no-underline"><span class="material-symbols-outlined">smart_toy</span> <span data-i18n="nav.ai_add">AI Add</span></a>
+        <a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary bg-primary-fixed/30 font-body-md text-body-md font-medium no-underline"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span> <span data-i18n="nav.profile">Profile</span></a>
+    </nav>
+</div>
+<main class="max-w-3xl mx-auto px-margin py-lg md:ml-64 md:px-xl">
+    <div class="hidden md:flex items-center justify-between mb-xl"><h1 class="font-h1 text-h1 text-on-background" data-i18n="profile.settings">Settings</h1></div>
+    <section class="mb-xl">
+        <div class="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex items-center gap-6">
+            <div class="w-20 h-20 rounded-full overflow-hidden bg-surface-container flex-shrink-0 border-2 border-surface-container-highest"><div class="w-full h-full bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-[40px] text-primary">person</span></div></div>
+            <div class="flex-grow">
+                <h2 class="font-h3 text-h3 text-on-background mb-1">User</h2>
+                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container-high border border-outline-variant text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1"><span class="w-1.5 h-1.5 rounded-full bg-outline-variant animate-pulse"></span><span data-i18n="profile.local_mode">Local Mode</span></div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">local@simplicity.life</p>
+                <button class="bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"><span class="material-symbols-outlined text-[16px]">edit</span> <span data-i18n="profile.edit_profile">Edit Profile</span></button>
+            </div>
+        </div>
+    </section>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+        <!-- Language -->
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(67,97,238,0.05)] transition-shadow">
+            <div class="flex items-center gap-3 mb-6 text-primary"><span class="material-symbols-outlined">language</span><h3 class="font-h3 text-body-lg font-semibold text-on-background" data-i18n="profile.language">Language</h3></div>
+            <div class="flex flex-col gap-2">
+                <label class="flex items-center justify-between p-3 rounded-lg cursor-pointer" id="lang-en-label" onclick="setLang('en')">
+                    <span class="font-body-md text-body-md font-medium" data-i18n="profile.english">English</span>
+                    <input class="text-primary focus:ring-primary h-5 w-5 border-outline" name="language" type="radio" id="lang-en-radio"/>
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-lg cursor-pointer" id="lang-zh-label" onclick="setLang('zh')">
+                    <span class="font-body-md text-body-md" data-i18n="profile.chinese">简体中文 (Chinese)</span>
+                    <input class="text-primary focus:ring-primary h-5 w-5 border-outline" name="language" type="radio" id="lang-zh-radio"/>
+                </label>
+            </div>
+        </section>
+        <!-- Appearance -->
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(67,97,238,0.05)] transition-shadow">
+            <div class="flex items-center gap-3 mb-6 text-on-surface-variant"><span class="material-symbols-outlined">palette</span><h3 class="font-h3 text-body-lg font-semibold text-on-background" data-i18n="profile.appearance">Appearance</h3></div>
+            <div class="grid grid-cols-2 gap-3" id="theme-buttons">
+                <button onclick="setTheme('light')" id="btn-light" class="flex flex-col items-center justify-center p-4 rounded-lg gap-2"><span class="material-symbols-outlined text-primary text-3xl">light_mode</span><span class="font-body-sm text-body-sm text-primary font-medium" data-i18n="profile.light">Light</span></button>
+                <button onclick="setTheme('dark')" id="btn-dark" class="flex flex-col items-center justify-center p-4 rounded-lg gap-2"><span class="material-symbols-outlined text-3xl">dark_mode</span><span class="font-body-sm text-body-sm" data-i18n="profile.dark">Dark</span></button>
+            </div>
+        </section>
+        <!-- Notifications -->
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(67,97,238,0.05)] transition-shadow md:col-span-2">
+            <div class="flex items-center gap-3 mb-4 text-on-surface-variant"><span class="material-symbols-outlined">notifications</span><h3 class="font-h3 text-body-lg font-semibold text-on-background" data-i18n="profile.notifications">Notifications</h3></div>
+            <div class="flex flex-col divide-y divide-outline-variant/30">
+                <div class="flex items-center justify-between py-4"><div><p class="font-body-md text-body-md text-on-background font-medium" data-i18n="profile.push_title">Push Notifications</p><p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="profile.push_desc">Daily reminders and alerts</p></div><label class="relative inline-flex items-center cursor-pointer"><input checked class="sr-only peer" type="checkbox"/><div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div></label></div>
+                <div class="flex items-center justify-between py-4"><div><p class="font-body-md text-body-md text-on-background font-medium" data-i18n="profile.email_title">Email Updates</p><p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="profile.email_desc">Weekly summaries and news</p></div><label class="relative inline-flex items-center cursor-pointer"><input class="sr-only peer" type="checkbox"/><div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div></label></div>
+            </div>
+        </section>
+        <!-- AI Preferences -->
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_40px_rgba(67,97,238,0.1)] transition-shadow relative overflow-hidden group">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
+            <div class="flex items-center gap-3 mb-6 text-primary relative z-10"><span class="material-symbols-outlined">psychology</span><h3 class="font-h3 text-body-lg font-semibold text-on-background" data-i18n="profile.ai_prefs">AI Preferences</h3></div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mb-4 relative z-10" data-i18n="profile.ai_desc">Configure how the AI assists you with daily tasks and schedule optimization.</p>
+            <a href="/add" class="text-primary font-label-md text-label-md flex items-center gap-1 hover:text-primary-fixed-variant transition-colors relative z-10 no-underline"><span data-i18n="profile.ai_manage">Manage AI Settings</span> <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+        </section>
+        <!-- Data Sync -->
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(67,97,238,0.05)] transition-shadow">
+            <div class="flex items-center gap-3 mb-6 text-on-surface-variant"><span class="material-symbols-outlined">sync</span><h3 class="font-h3 text-body-lg font-semibold text-on-background" data-i18n="profile.data_sync">Data Sync</h3><span class="ml-auto px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide" data-i18n="profile.auto">Automatic</span></div>
+            <div class="flex items-center p-3 rounded-lg border border-outline-variant bg-surface-container-low mb-3 gap-3"><span class="material-symbols-outlined text-on-surface-variant">cloud_done</span><div><p class="font-body-sm text-body-sm text-on-background font-medium" data-i18n="profile.last_synced">Last synced</p><p class="font-label-sm text-label-sm text-on-surface-variant" id="last-sync" data-i18n="profile.just_now">Just now</p></div></div>
+            <div class="mb-4 space-y-2"><p class="font-body-sm text-body-sm text-on-surface-variant flex items-start gap-2"><span class="material-symbols-outlined text-[18px] text-primary">info</span><span data-i18n="profile.sync_info1">Use Export to save your data as a JSON file. Use Import to restore from a backup.</span></p><p class="font-body-sm text-body-sm text-on-surface-variant flex items-start gap-2"><span class="material-symbols-outlined text-[18px] text-primary">devices</span><span data-i18n="profile.sync_info2">Synchronize schedules across all your devices.</span></p></div>
+            <a href="/api/export" class="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md py-3 px-4 rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 no-underline"><span class="material-symbols-outlined text-[20px]">download</span> <span data-i18n="profile.export_data">Export Data</span></a>
+        </section>
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg mt-md md:col-span-2">
+            <button onclick="clearAllData()" class="w-full text-error font-body-md text-body-md py-3 text-center hover:bg-error-container/20 rounded-lg transition-colors" data-i18n="profile.clear_data">Clear All Data</button>
+        </section>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+function updateThemeUI() {
+    const btnL = document.getElementById('btn-light');
+    const btnD = document.getElementById('btn-dark');
+    if (!btnL || !btnD) return;
+    if (currentTheme === 'dark') {
+        btnD.className = 'flex flex-col items-center justify-center p-4 rounded-lg border border-primary-container bg-primary-fixed/10 gap-2';
+        btnL.className = 'flex flex-col items-center justify-center p-4 rounded-lg border border-outline-variant hover:bg-surface-container-low text-on-surface-variant gap-2 transition-colors';
+        btnD.querySelector('span:last-child').className = 'font-body-sm text-body-sm text-primary font-medium';
+        btnL.querySelector('span:last-child').className = 'font-body-sm text-body-sm';
+    } else {
+        btnL.className = 'flex flex-col items-center justify-center p-4 rounded-lg border border-primary-container bg-primary-fixed/10 gap-2';
+        btnD.className = 'flex flex-col items-center justify-center p-4 rounded-lg border border-outline-variant hover:bg-surface-container-low text-on-surface-variant gap-2 transition-colors';
+        btnL.querySelector('span:last-child').className = 'font-body-sm text-body-sm text-primary font-medium';
+        btnD.querySelector('span:last-child').className = 'font-body-sm text-body-sm';
+    }
+}
+document.addEventListener('theme-updated', updateThemeUI);
+updateThemeUI();
+
+function updateLangUI() {
+    const enL = document.getElementById('lang-en-label');
+    const zhL = document.getElementById('lang-zh-label');
+    const enR = document.getElementById('lang-en-radio');
+    const zhR = document.getElementById('lang-zh-radio');
+    if (currentLang === 'en') {
+        enL.className = 'flex items-center justify-between p-3 rounded-lg border border-primary-container bg-primary-fixed/10 cursor-pointer';
+        zhL.className = 'flex items-center justify-between p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low cursor-pointer transition-colors';
+        enR.checked = true; zhR.checked = false;
+        enL.querySelector('span').className = 'font-body-md text-body-md text-on-background font-medium';
+        zhL.querySelector('span').className = 'font-body-md text-body-md text-on-surface-variant';
+    } else {
+        zhL.className = 'flex items-center justify-between p-3 rounded-lg border border-primary-container bg-primary-fixed/10 cursor-pointer';
+        enL.className = 'flex items-center justify-between p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low cursor-pointer transition-colors';
+        zhR.checked = true; enR.checked = false;
+        zhL.querySelector('span').className = 'font-body-md text-body-md text-on-background font-medium';
+        enL.querySelector('span').className = 'font-body-md text-body-md text-on-surface-variant';
+    }
+}
+document.addEventListener('i18n-updated', updateLangUI);
+updateLangUI();
+document.getElementById('last-sync').textContent = new Date().toLocaleString(currentLang==='zh'?'zh-CN':'en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+async function clearAllData(){if(!confirm(t('profile.clear_confirm')))return;try{const r=await fetch('/api/items');const items=await r.json();for(const item of items)await fetch(`/api/items/${item.id}`,{method:'DELETE'});location.reload()}catch(e){alert(t('profile.clear_failed'))}}
+</script>
+{% endblock %}

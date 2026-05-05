@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="px-margin max-w-screen-md mx-auto pt-8">
+    <!-- HEADER -->
+    <div id="header-area" class="mb-lg">
+        <div class="flex items-center gap-3 mb-xs">
+            <button id="btn-back" class="hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high text-on-surface-variant flex-shrink-0" onclick="goBack()">
+                <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            </button>
+            <h1 class="font-h1 text-h1 text-on-surface" id="view-title" data-i18n="home.today">Today</h1>
+        </div>
+        <div class="flex items-center gap-2 cursor-pointer group" id="drill-target" onclick="drillDown()">
+            <p class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors" id="subtitle">Loading...</p>
+            <span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors" id="drill-icon">expand_more</span>
+        </div>
+    </div>
+
+    <!-- DAY VIEW -->
+    <div id="view-day" class="relative pl-6 md:pl-8">
+        <div class="absolute left-[11px] md:left-[15px] top-4 bottom-8 w-px bg-outline-variant rounded-full" id="timeline-line"></div>
+        <div id="day-list"></div>
+        <div id="day-empty" class="hidden text-center py-xl text-on-surface-variant">
+            <span class="material-symbols-outlined text-[32px] block mb-sm">inbox</span>
+            <p class="font-body-sm"><span data-i18n="home.nothing">Nothing here yet.</span> <a href="/add" class="text-primary underline" data-i18n="home.add_something">Add something</a>.</p>
+        </div>
+    </div>
+
+    <!-- WEEK VIEW -->
+    <div id="view-week" class="hidden">
+        <div class="flex items-center justify-between mb-md">
+            <button onclick="shiftWeek(-1)" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high flex-shrink-0"><span class="material-symbols-outlined">chevron_left</span></button>
+            <span class="font-h3 text-h3 text-on-surface text-center" id="week-label"></span>
+            <button onclick="shiftWeek(1)" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high flex-shrink-0"><span class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 md:gap-2" id="week-grid"></div>
+    </div>
+
+    <!-- MONTH VIEW -->
+    <div id="view-month" class="hidden">
+        <div class="bg-surface-container-lowest rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-outline-variant/20 p-4">
+            <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                <div class="font-label-sm text-label-sm text-secondary uppercase">S</div><div class="font-label-sm text-label-sm text-secondary uppercase">M</div><div class="font-label-sm text-label-sm text-secondary uppercase">T</div><div class="font-label-sm text-label-sm text-secondary uppercase">W</div><div class="font-label-sm text-label-sm text-secondary uppercase">T</div><div class="font-label-sm text-label-sm text-secondary uppercase">F</div><div class="font-label-sm text-label-sm text-secondary uppercase">S</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 md:gap-2" id="month-grid"></div>
+        </div>
+    </div>
+
+    <!-- YEAR VIEW -->
+    <div id="view-year" class="hidden">
+        <div class="flex items-center justify-between mb-md">
+            <button onclick="shiftYear(-1)" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high flex-shrink-0"><span class="material-symbols-outlined">chevron_left</span></button>
+            <span class="font-h3 text-h3 text-on-surface" id="year-label"></span>
+            <button onclick="shiftYear(1)" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high flex-shrink-0"><span class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-md" id="year-grid"></div>
+    </div>
+</main>
+
+<!-- EDIT MODAL -->
+<div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm" onclick="if(event.target===this)closeEdit()">
+    <div class="bg-surface-container-lowest w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl md:rounded-2xl p-lg shadow-xl" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-lg">
+            <button onclick="closeEdit()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined">close</span></button>
+            <div class="flex items-center gap-sm">
+                <button onclick="toggleComplete()" id="btn-complete" class="py-2 px-4 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span> Complete</button>
+                <button onclick="deleteEvent()" class="py-2 px-4 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.delete">Delete</button>
+                <button onclick="saveEdit()" class="py-2 px-4 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.save">Save</button>
+            </div>
+        </div>
+        <input type="hidden" id="edit-id"/>
+        <div class="flex flex-col gap-md">
+            <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.event_title">Event Title</label><input id="edit-title" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface outline-none transition-colors" type="text"/></div>
+            <div class="flex gap-sm"><div class="flex-1"><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.date">Date</label><input id="edit-date" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date"/></div><div class="flex-1"><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.time">Time</label><input id="edit-time" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" data-i18n-placeholder="edit.time_placeholder"/></div></div>
+            <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.location">Location</label><div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">location_on</span><input id="edit-location" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg pl-9 pr-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" data-i18n-placeholder="edit.add_location"/></div></div>
+            <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.meeting_link">Meeting Link</label><div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">link</span><input id="edit-link" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg pl-9 pr-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" data-i18n-placeholder="edit.add_link"/></div></div>
+            <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">notifications</span><span data-i18n="edit.reminder">Reminder</span></label>
+                <div class="flex bg-surface-container-low rounded-md p-0.5 border border-outline-variant/30 mb-sm w-fit" id="edit-reminder-toggle">
+                    <button onclick="setReminderType('once')" class="px-3 py-1 text-[10px] font-bold rounded bg-surface-container-lowest shadow-sm text-primary" data-i18n="edit.once">One-time</button>
+                    <button onclick="setReminderType('recurring')" class="px-3 py-1 text-[10px] font-bold rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors" data-i18n="edit.recurring">Recurring</button>
+                </div>
+                <div class="flex gap-sm" id="edit-reminder-once"><input id="edit-reminder-date" class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date"/><input id="edit-reminder-time" class="w-24 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="time"/></div>
+                <div id="edit-reminder-recurring" class="hidden flex-col gap-2"><div class="flex gap-sm items-center"><input id="edit-recur-start" class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date"/><input id="edit-recur-end" class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date"/><input id="edit-recur-time" class="w-24 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="time"/></div><div class="flex justify-between gap-1 mt-1" id="edit-day-buttons">
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">M</button>
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">T</button>
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">W</button>
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">T</button>
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">F</button>
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">S</button>
+                    <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">S</button>
+                </div></div>
+            </div>
+            <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.priority">Priority</label><div class="flex bg-surface-container-low rounded-lg p-1" id="edit-priority-group"><button onclick="setEditPriority(this,'low')" class="flex-1 font-label-md text-label-md py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container" data-i18n="edit.low">Low</button><button onclick="setEditPriority(this,'med')" class="flex-1 font-label-md text-label-md py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container" data-i18n="edit.med">Med</button><button onclick="setEditPriority(this,'high')" class="flex-1 font-label-md text-label-md py-1.5 rounded-md bg-surface-container-lowest shadow-sm text-primary" data-i18n="edit.high">High</button></div></div>
+            <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.notes">Notes</label><textarea id="edit-notes" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors resize-none" rows="3" data-i18n-placeholder="edit.notes_placeholder"></textarea></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+var views = ['day','week','month','year'];
+var currentView = 'day';
+var anchorDate = new Date();
+var allItems = [];
+var todayStr = new Date().toISOString().slice(0,10);
+var loc = function(){ return (typeof currentLang!=='undefined'&&currentLang==='zh')?'zh-CN':'en-US'; };
+var editReminderType='once', editItemId=null;
+var tsY=0, tsX=0;
+
+function fmt(d){ if(!d) return ''; return new Date(d).toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit',hour12:(typeof currentLang==='undefined'||currentLang!=='zh')}); }
+function esc(s){ if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ── Navigation ──
+window.drillDown = function(){
+    var idx = views.indexOf(currentView);
+    if(idx < views.length-1){ currentView = views[idx+1]; applyView(); }
+};
+window.goBack = function(){
+    var idx = views.indexOf(currentView);
+    if(idx > 0){ currentView = views[idx-1]; applyView(); }
+};
+window.goToDay = function(d){
+    anchorDate = new Date(d);
+    currentView = 'day';
+    applyView();
+};
+
+// ── Apply View ──
+function applyView(){
+    var idx = views.indexOf(currentView);
+    document.getElementById('btn-back').classList.toggle('hidden', idx===0);
+    document.getElementById('drill-target').classList.toggle('hidden', idx===3);
+    document.getElementById('drill-icon').classList.toggle('hidden', idx===3);
+
+    var titles = {day:'home.today', week:'home.this_week', month:'home.month', year:'home.year'};
+    var el = document.getElementById('view-title');
+    el.setAttribute('data-i18n', titles[currentView]);
+    el.textContent = (typeof t!=='undefined') ? t(titles[currentView]) : titles[currentView];
+
+    document.getElementById('view-day').classList.toggle('hidden', currentView!=='day');
+    document.getElementById('view-week').classList.toggle('hidden', currentView!=='week');
+    document.getElementById('view-month').classList.toggle('hidden', currentView!=='month');
+    document.getElementById('view-year').classList.toggle('hidden', currentView!=='year');
+
+    if(currentView==='day'){ renderDay(); updateSubtitle(anchorDate); }
+    else if(currentView==='week') renderWeek();
+    else if(currentView==='month') renderMonth();
+    else renderYear();
+}
+
+function updateSubtitle(d){
+    document.getElementById('subtitle').textContent = d.toLocaleDateString(loc(), {weekday:'short',month:'short',day:'numeric'});
+}
+
+// ── Day View ──
+function renderDay(){
+    var ds = anchorDate.toISOString().slice(0,10);
+    var items = allItems.filter(function(i){ return i.created_at && i.created_at.indexOf(ds)===0; });
+    var list = document.getElementById('day-list');
+    var empty = document.getElementById('day-empty');
+    var line = document.getElementById('timeline-line');
+
+    if(!items.length){
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        if(line) line.style.display = 'none';
+        return;
+    }
+    empty.classList.add('hidden');
+    if(line) line.style.display = '';
+
+    var cols = {voice:'primary',image:'tertiary',link:'secondary',text:'primary'};
+    var icons = {voice:'mic',image:'image',link:'link',text:'text_fields'};
+    var bc = {primary:{border:'border-primary',left:'bg-primary'},tertiary:{border:'border-tertiary',left:'bg-tertiary'},secondary:{border:'border-secondary',left:'bg-secondary'}};
+
+    list.innerHTML = items.map(function(item){
+        var co = bc[cols[item.type]] || bc.primary;
+        var done = (item.ai_tags||'').indexOf('completed') !== -1;
+        var strike = done ? 'line-through opacity-60' : '';
+        var title = esc((item.content||item.type).slice(0,50));
+        var summary = esc((item.ai_summary||(typeof t!=='undefined'?t('home.tap_to_edit'):'Tap to edit')).slice(0,80));
+        var time = fmt(item.created_at);
+        var icon = icons[item.type] || 'note';
+        var id = item.id;
+
+        return '<div class="relative mb-lg" id="item-'+id+'">'+
+            '<div class="absolute -left-6 md:-left-8 top-5 w-3 h-3 rounded-full bg-surface border-2 '+(done?'border-green-500 bg-green-500':co.border)+' z-10"></div>'+
+            '<div class="bg-surface border border-outline-variant rounded-xl p-md relative overflow-hidden hover:shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-200 cursor-pointer group" onclick="openEdit('+id+')">'+
+            (done?'<div class="absolute right-3 top-3 text-green-500"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: \'FILL\' 1;">check_circle</span></div>':'')+
+            '<div class="absolute left-0 top-0 bottom-0 w-1 '+(done?'bg-green-500':co.left)+'"></div>'+
+            '<div class="flex justify-between items-start mb-xs"><h3 class="font-body-lg text-body-lg font-semibold text-on-surface '+strike+'">'+title+'</h3><span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> '+time+'</span></div>'+
+            '<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2 '+strike+'"><span class="material-symbols-outlined text-[16px]">'+icon+'</span> '+summary+'</p>'+
+            '</div></div>';
+    }).join('');
+}
+
+// ── Week View ──
+function getWeekStart(){ var d=new Date(anchorDate); d.setDate(d.getDate()-d.getDay()); return d; }
+window.shiftWeek = function(dir){ anchorDate.setDate(anchorDate.getDate()+dir*7); renderWeek(); };
+function renderWeek(){
+    var start = getWeekStart();
+    var end = new Date(start); end.setDate(start.getDate()+6);
+    document.getElementById('subtitle').textContent = start.toLocaleDateString(loc(),{month:'short',day:'numeric'})+' - '+end.toLocaleDateString(loc(),{month:'short',day:'numeric',year:'numeric'});
+    document.getElementById('week-label').textContent = start.toLocaleDateString(loc(),{month:'long',year:'numeric'});
+
+    var html = '';
+    for(var i=0;i<7;i++){
+        var d = new Date(start); d.setDate(start.getDate()+i);
+        var ds = d.toISOString().slice(0,10);
+        var isToday = ds===todayStr;
+        var dayItems = allItems.filter(function(it){ return it.created_at && it.created_at.indexOf(ds)===0; });
+        html += '<div class="min-h-[100px] flex flex-col p-2 rounded-xl border '+(isToday?'bg-primary text-on-primary shadow-[0_8px_24px_rgba(35,70,213,0.2)] border-transparent':'border-outline-variant/30 bg-surface-container-low/50')+' cursor-pointer hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden" onclick="goToDay(new Date(\''+ds+'\'))">'+
+            (isToday?'<div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>':'')+
+            '<span class="font-body-lg text-body-lg font-bold text-center relative z-10">'+d.getDate()+'</span>'+
+            '<span class="font-label-sm text-label-sm text-center relative z-10 opacity-70">'+d.toLocaleDateString('en-US',{weekday:'short'})+'</span>'+
+            '<div class="mt-1 flex-1 overflow-hidden relative z-10">'+dayItems.slice(0,2).map(function(item){ return '<div class="text-[10px] leading-tight truncate '+(isToday?'text-white/80':'text-on-surface-variant')+' mb-0.5">'+esc((item.content||'event').slice(0,20))+'</div>'; }).join('')+'</div>'+
+            (dayItems.length>2?'<div class="text-[9px] '+(isToday?'text-white/60':'text-primary')+' relative z-10">+'+ (dayItems.length-2) +' more</div>':'')+
+        '</div>';
+    }
+    document.getElementById('week-grid').innerHTML = html;
+}
+
+// ── Month View ──
+window.shiftMonth = function(dir){ anchorDate.setMonth(anchorDate.getMonth()+dir); renderMonth(); };
+function renderMonth(){
+    var y=anchorDate.getFullYear(), m=anchorDate.getMonth();
+    document.getElementById('subtitle').textContent = anchorDate.toLocaleDateString(loc(),{month:'long',year:'numeric'});
+
+    var firstDay = new Date(y,m,1).getDay(), daysIn = new Date(y,m+1,0).getDate(), prevDays = new Date(y,m,0).getDate();
+    var html = '';
+    for(var i=firstDay-1; i>=0; i--) html += '<div class="min-h-[60px] md:min-h-[80px] flex flex-col p-1.5 rounded-xl border border-transparent opacity-40"><span class="font-body-sm text-body-sm text-on-surface text-center">'+(prevDays-i)+'</span></div>';
+    for(var d=1; d<=daysIn; d++){
+        var ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        var isToday = ds===todayStr;
+        var evts = allItems.filter(function(it){ return it.created_at && it.created_at.indexOf(ds)===0; });
+        html += '<div class="min-h-[60px] md:min-h-[80px] flex flex-col p-1.5 rounded-xl cursor-pointer hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden '+(isToday?'bg-primary text-on-primary shadow-[0_8px_24px_rgba(35,70,213,0.2)] transform -translate-y-0.5 border-transparent':'border border-outline-variant/30 bg-surface-container-low/50')+'" onclick="goToDay(new Date(\''+ds+'\'))">'+
+            (isToday?'<div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>':'')+
+            '<span class="font-body-md text-body-md '+(isToday?'font-bold':'')+' text-center relative z-10">'+d+'</span>'+
+            '<div class="mt-auto flex flex-col gap-0.5 w-full max-w-[30px] mx-auto relative z-10">'+evts.slice(0,2).map(function(){ return '<div class="h-1 rounded-full '+(isToday?'bg-white/60':'bg-primary')+' w-full"></div>'; }).join('')+'</div></div>';
+    }
+    var remaining = 42 - firstDay - daysIn;
+    for(var d=1; d<=remaining; d++) html += '<div class="min-h-[60px] md:min-h-[80px] flex flex-col p-1.5 rounded-xl border border-transparent opacity-40"><span class="font-body-sm text-body-sm text-on-surface text-center">'+d+'</span></div>';
+    document.getElementById('month-grid').innerHTML = html;
+}
+
+// ── Year View ──
+window.shiftYear = function(dir){ anchorDate.setFullYear(anchorDate.getFullYear()+dir); renderYear(); };
+function renderYear(){
+    var y = anchorDate.getFullYear();
+    document.getElementById('subtitle').textContent = y;
+    document.getElementById('year-label').textContent = y;
+
+    var html = '';
+    for(var m=0; m<12; m++){
+        var daysIn = new Date(y,m+1,0).getDate();
+        var monthName = new Date(y,m,1).toLocaleDateString(loc(),{month:'short'});
+        var hasItems = allItems.some(function(it){
+            if(!it.created_at) return false;
+            var d = new Date(it.created_at);
+            return d.getFullYear()===y && d.getMonth()===m;
+        });
+        html += '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-lg hover:border-primary/30 hover:shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all cursor-pointer flex flex-col items-center" onclick="anchorDate=new Date('+y+','+m+',1);currentView=\'month\';applyView()">'+
+            '<span class="font-h3 text-h3 text-on-surface mb-1">'+monthName+'</span>'+
+            '<span class="font-body-sm text-body-sm text-on-surface-variant mb-2">'+daysIn+' days</span>'+
+            '<div class="flex gap-1 flex-wrap justify-center">'+(hasItems?'<span class="w-2 h-2 rounded-full bg-primary"></span>':'')+'</div></div>';
+    }
+    document.getElementById('year-grid').innerHTML = html;
+}
+
+// ── Swipe ──
+document.addEventListener('DOMContentLoaded', function(){
+    var dayList = document.getElementById('day-list');
+    if(dayList){
+        var el=null, sx=0;
+        dayList.addEventListener('touchstart', function(e){
+            var item = e.target.closest('[id^="item-"]');
+            if(!item) return;
+            var match = allItems.find(function(i){ return i.id===parseInt(item.id.replace('item-','')); });
+            if(match && (match.ai_tags||'').indexOf('completed')!==-1) return;
+            el=item; sx=e.touches[0].clientX;
+        }, {passive:false});
+        dayList.addEventListener('touchmove', function(e){
+            if(!el) return;
+            var dx = e.touches[0].clientX - sx;
+            if(dx>20){ el.style.transform='translateX('+Math.min(dx,80)+'px)'; el.style.opacity='0.7'; }
+        }, {passive:false});
+        dayList.addEventListener('touchend', function(e){
+            if(!el) return;
+            var dx = e.changedTouches[0].clientX - sx;
+            el.style.transform=''; el.style.opacity='';
+            if(dx>60) window.toggleCompleteById(parseInt(el.id.replace('item-','')));
+            el=null;
+        });
+    }
+
+    // Month swipe (up/down)
+    var monthEl = document.getElementById('view-month');
+    if(monthEl){
+        monthEl.addEventListener('touchstart', function(e){ tsY=e.touches[0].clientY; tsX=e.touches[0].clientX; }, {passive:false});
+        monthEl.addEventListener('touchend', function(e){
+            var dy = e.changedTouches[0].clientY - tsY;
+            var dx = e.changedTouches[0].clientX - tsX;
+            if(Math.abs(dy)>50 && Math.abs(dy)>Math.abs(dx) && currentView==='month'){
+                window.shiftMonth(dy<0?1:-1);
+            }
+        });
+    }
+
+    // Week swipe (left/right)
+    var weekEl = document.getElementById('view-week');
+    if(weekEl){
+        weekEl.addEventListener('touchstart', function(e){ tsX=e.touches[0].clientX; tsY=e.touches[0].clientY; }, {passive:false});
+        weekEl.addEventListener('touchend', function(e){
+            var dx = e.changedTouches[0].clientX - tsX;
+            var dy = e.changedTouches[0].clientY - tsY;
+            if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy) && currentView==='week'){
+                window.shiftWeek(dx<0?1:-1);
+            }
+        });
+    }
+});
+
+// ── Edit Modal ──
+window.openEdit = function(id){
+    editItemId = id;
+    var item = allItems.find(function(i){ return i.id===id; });
+    if(!item) return;
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-title').value = item.content || '';
+    document.getElementById('edit-date').value = (item.created_at||'').slice(0,10);
+    document.getElementById('edit-time').value = '';
+    document.getElementById('edit-location').value = '';
+    document.getElementById('edit-link').value = '';
+    document.getElementById('edit-notes').value = item.ai_summary || '';
+    document.getElementById('edit-modal').classList.remove('hidden');
+    setEditPriorityBtn('high');
+    setReminderType('once');
+    var done = (item.ai_tags||'').indexOf('completed') !== -1;
+    var btn = document.getElementById('btn-complete');
+    btn.innerHTML = done ? '<span class="material-symbols-outlined text-[16px]">close</span> Uncomplete' : '<span class="material-symbols-outlined text-[16px]">check</span> Complete';
+    btn.className = done ? 'py-2 px-4 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1' : 'py-2 px-4 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1';
+};
+window.closeEdit = function(){ document.getElementById('edit-modal').classList.add('hidden'); };
+window.setReminderType = function(type){
+    editReminderType = type;
+    var btns = document.querySelectorAll('#edit-reminder-toggle button');
+    btns[0].className = type==='once' ? 'px-3 py-1 text-[10px] font-bold rounded bg-surface-container-lowest shadow-sm text-primary' : 'px-3 py-1 text-[10px] font-bold rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors';
+    btns[1].className = type==='recurring' ? 'px-3 py-1 text-[10px] font-bold rounded bg-surface-container-lowest shadow-sm text-primary' : 'px-3 py-1 text-[10px] font-bold rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors';
+    document.getElementById('edit-reminder-once').classList.toggle('hidden', type!=='once');
+    document.getElementById('edit-reminder-recurring').classList.toggle('hidden', type!=='recurring');
+};
+window.setEditPriority = function(btn, p){
+    btn.parentElement.querySelectorAll('button').forEach(function(b){
+        b.classList.remove('bg-surface-container-lowest','shadow-sm','text-primary');
+        b.classList.add('text-on-surface-variant');
+    });
+    btn.classList.add('bg-surface-container-lowest','shadow-sm','text-primary');
+    btn.classList.remove('text-on-surface-variant');
+};
+function setEditPriorityBtn(p){
+    var bs = document.querySelectorAll('#edit-priority-group button');
+    bs.forEach(function(b){ b.classList.remove('bg-surface-container-lowest','shadow-sm','text-primary'); b.classList.add('text-on-surface-variant'); });
+    var idx = {low:0,med:1,high:2}[p] || 2;
+    bs[idx].classList.add('bg-surface-container-lowest','shadow-sm','text-primary');
+    bs[idx].classList.remove('text-on-surface-variant');
+}
+window.toggleComplete = function(){
+    if(!editItemId) return;
+    fetch('/api/items/'+editItemId+'/complete', {method:'POST'}).then(function(){ closeEdit(); loadAll(); });
+};
+window.toggleCompleteById = function(id){
+    fetch('/api/items/'+id+'/complete', {method:'POST'}).then(function(){ loadAll(); });
+};
+window.saveEdit = function(){
+    var id = document.getElementById('edit-id').value;
+    var title = document.getElementById('edit-title').value.trim();
+    var date = document.getElementById('edit-date').value;
+    var time = document.getElementById('edit-time').value.trim();
+    var location = document.getElementById('edit-location').value.trim();
+    var link = document.getElementById('edit-link').value.trim();
+    var notes = document.getElementById('edit-notes').value.trim();
+    var prioBtn = document.querySelector('#edit-priority-group .bg-surface-container-lowest');
+    var priority = (prioBtn?prioBtn.textContent.trim().toLowerCase():'high');
+    var dayBtns = document.querySelectorAll('#edit-day-buttons button.bg-primary');
+    var days = Array.from(dayBtns).map(function(b){ return b.textContent; });
+
+    var summary = '['+priority.toUpperCase()+']';
+    if(date) summary += '\nDate: '+date;
+    if(time) summary += '\nTime: '+time;
+    if(location) summary += '\nLocation: '+location;
+    if(link) summary += '\nLink: '+link;
+    if(editReminderType==='recurring'){
+        var rs = document.getElementById('edit-recur-start').value;
+        var re = document.getElementById('edit-recur-end').value;
+        var rt = document.getElementById('edit-recur-time').value;
+        summary += '\nRecurring: '+rs+' to '+re+' at '+rt+', days: '+(days.join(',')||'none');
+    } else {
+        var rd = document.getElementById('edit-reminder-date').value;
+        var rtm = document.getElementById('edit-reminder-time').value;
+        if(rd) summary += '\nReminder: '+rd+' at '+rtm;
+    }
+    if(notes) summary += '\nNotes: '+notes;
+
+    fetch('/api/items/'+id+'/update', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({content: title||'Event', ai_summary: summary})
+    }).then(function(){ closeEdit(); loadAll(); });
+};
+window.deleteEvent = function(){
+    if(!confirm((typeof t!=='undefined'?t('edit.delete_confirm'):'Delete this event?'))) return;
+    fetch('/api/items/'+editItemId, {method:'DELETE'}).then(function(){ closeEdit(); loadAll(); });
+};
+
+// ── Load ──
+function loadAll(){
+    fetch('/api/items')
+        .then(function(r){ return r.json(); })
+        .then(function(items){
+            allItems = items;
+            anchorDate = new Date();
+            currentView = 'day';
+            applyView();
+        })
+        .catch(function(){
+            document.getElementById('day-list').innerHTML = '<div class="text-center py-xl text-error font-body-sm">Failed to load items. Make sure the server is running.</div>';
+        });
+}
+
+loadAll();
+})();
+</script>
+{% endblock %}
