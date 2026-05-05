@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="flex justify-between items-center px-margin py-md pt-safe w-full max-w-screen-md mx-auto relative z-10">
+    <div class="flex items-center gap-2" id="mode-header">
+        <span id="mode-icon" class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+        <span id="mode-title" class="font-h3 text-h3 text-on-surface tracking-tight" data-i18n="add.ai_title">AI Assistant</span>
+    </div>
+    <button id="mode-toggle" onclick="toggleMode()" class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-primary" title="Switch mode">
+        <span class="material-symbols-outlined">sync</span>
+    </button>
+</header>
+<main class="flex-1 px-margin flex flex-col max-w-screen-md mx-auto w-full pb-safe">
+    <!-- ===== AI MODE ===== -->
+    <div id="ai-mode">
+        <div class="mt-lg mb-xl space-y-sm">
+            <h1 class="font-h1 text-h1 text-on-surface" data-i18n="add.add_to_life">Add to your life</h1>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-md" data-i18n="add.ai_subtitle">Capture the details. Let AI handle the organization and scheduling.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-md md:gap-lg flex-1 content-start">
+            <button id="btn-voice" onclick="startVoice()" class="col-span-2 group relative overflow-hidden bg-primary text-on-primary rounded-xl p-xl flex flex-col items-center justify-center gap-md shadow-[0_12px_40px_rgba(67,97,238,0.15)] hover:shadow-[0_16px_50px_rgba(67,97,238,0.25)] hover:-translate-y-1 transition-all duration-300 ease-out">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50 pointer-events-none"></div>
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md shadow-inner group-hover:scale-105 transition-transform duration-300">
+                    <span id="voice-icon" class="material-symbols-outlined text-[40px]" style="font-variation-settings: 'FILL' 1;">mic</span>
+                </div>
+                <div class="text-center z-10">
+                    <span id="voice-label" class="font-h2 text-h2 block mb-1" data-i18n="add.voice_note">Voice Note</span>
+                    <span id="voice-status" class="font-body-md text-body-md text-primary-fixed opacity-90" data-i18n="add.voice_speak">Speak your mind, hands-free</span>
+                </div>
+            </button>
+            <button onclick="document.getElementById('file-input').click()" class="bg-surface-container rounded-xl p-lg flex flex-col items-start gap-md border border-outline-variant hover:border-primary/30 hover:bg-surface-container-high hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 group text-left">
+                <div class="w-14 h-14 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+                    <span class="material-symbols-outlined text-[28px]">image</span>
+                </div>
+                <div><span class="font-h3 text-h3 block text-on-surface mb-xs" data-i18n="add.upload_image">Upload Image</span><span class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="add.image_subtitle">Posters, tickets, screenshots</span></div>
+            </button>
+            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="uploadImage(this)">
+            <button onclick="pasteLink()" class="bg-surface-container rounded-xl p-lg flex flex-col items-start gap-md border border-outline-variant hover:border-primary/30 hover:bg-surface-container-high hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 group text-left">
+                <div class="w-14 h-14 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+                    <span class="material-symbols-outlined text-[28px]">link</span>
+                </div>
+                <div><span class="font-h3 text-h3 block text-on-surface mb-xs" data-i18n="add.paste_link">Paste Link</span><span class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="add.link_subtitle">Articles, invites, locations</span></div>
+            </button>
+        </div>
+        <div class="mt-auto pt-xl">
+            <div class="relative flex items-end gap-sm bg-surface rounded-xl p-xs border-2 border-surface-variant focus-within:border-primary focus-within:bg-surface-container-lowest focus-within:shadow-[0_4px_20px_rgba(67,97,238,0.08)] transition-all duration-200 group">
+                <textarea id="text-input" class="w-full bg-transparent border-none focus:ring-0 resize-none font-body-md text-body-md text-on-surface placeholder:text-outline py-4 px-md overflow-hidden min-h-[60px]" data-i18n-placeholder="add.text_placeholder" placeholder="Or just type it here..." rows="1"></textarea>
+                <div class="p-xs pb-sm shrink-0">
+                    <button onclick="sendText()" class="w-12 h-12 rounded-lg bg-surface-container-high text-on-surface-variant flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="result-panel" class="hidden mt-lg bg-surface-container rounded-xl p-lg border border-outline-variant space-y-sm">
+            <div class="flex items-center justify-between">
+                <span class="font-label-md text-label-md text-primary" data-i18n="add.ai_analysis">AI Analysis</span>
+                <button onclick="document.getElementById('result-panel').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+            <div id="result-content" class="font-body-sm text-body-sm text-on-surface-variant whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
+    <!-- ===== MANUAL MODE ===== -->
+    <div id="manual-mode" class="hidden">
+        <div class="mt-lg mb-lg flex justify-between items-start">
+            <div>
+                <h1 class="font-h2 text-h2 text-on-background mb-xs" data-i18n="add.review_details">Review Details</h1>
+                <p class="font-body-md text-body-md text-on-surface-variant" data-i18n="add.review_subtitle">Please confirm the details of your new schedule item.</p>
+            </div>
+            <button onclick="addEventCard()" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors mt-1">
+                <span class="material-symbols-outlined text-[24px]">add</span>
+            </button>
+        </div>
+        <div id="manual-cards" class="flex flex-col gap-lg mb-xl"></div>
+        <div class="mt-auto" id="manual-actions" style="display:none">
+            <button onclick="confirmManual()" class="w-full bg-primary text-on-primary font-body-lg text-body-lg font-medium py-md rounded-xl shadow-[0px_4px_14px_rgba(35,70,213,0.25)] hover:bg-surface-tint hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98] flex items-center justify-center group">
+                <span class="material-symbols-outlined mr-sm group-hover:scale-110 transition-transform">check_circle</span>
+                Confirm <span id="manual-count">0</span> &amp; Add to Schedule
+            </button>
+            <button onclick="clearManual()" class="w-full mt-sm py-sm text-on-surface-variant font-body-sm text-body-sm hover:text-on-background transition-colors" data-i18n="add.cancel">Cancel</button>
+        </div>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+let isManual = false;
+let eventCardIdx = 0;
+
+function toggleMode() {
+    isManual = !isManual;
+    document.getElementById('ai-mode').classList.toggle('hidden', isManual);
+    document.getElementById('manual-mode').classList.toggle('hidden', !isManual);
+    const icon = document.getElementById('mode-icon');
+    const title = document.getElementById('mode-title');
+    const toggle = document.getElementById('mode-toggle');
+    if (isManual) {
+        icon.textContent = 'edit';
+        title.setAttribute('data-i18n', 'add.manual_title'); title.textContent = t('add.manual_title');
+        toggle.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span>';
+        if (eventCardIdx === 0) addEventCard();
+        updateManualCount();
+    } else {
+        icon.textContent = 'auto_awesome';
+        icon.style.fontVariationSettings = "'FILL' 1";
+        title.setAttribute('data-i18n', 'add.ai_title'); title.textContent = t('add.ai_title');
+        toggle.innerHTML = '<span class="material-symbols-outlined">sync</span>';
+    }
+}
+
+function addEventCard() {
+    eventCardIdx++;
+    const i = eventCardIdx;
+    const today = new Date().toISOString().slice(0,10);
+    const div = document.createElement('div');
+    div.id = `card-${i}`;
+    div.innerHTML = `
+    <article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm relative overflow-hidden group">
+        <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+        <button onclick="removeCard(${i})" class="absolute top-4 right-4 text-on-surface-variant hover:text-error transition-colors p-1 rounded-full hover:bg-error-container z-10">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+        <div class="flex flex-col gap-md pl-2 pr-6">
+            <div>
+                <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.event_title')}</label>
+                <input class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface outline-none transition-colors" type="text" placeholder="${t('manual.title_placeholder')}" data-field="title"/>
+            </div>
+            <div class="flex gap-sm">
+                <div class="flex-1">
+                    <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.date')}</label>
+                    <input class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date" value="${today}" data-field="date"/>
+                </div>
+                <div class="flex-1">
+                    <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.time')}</label>
+                    <input class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" placeholder="${t('manual.time_placeholder')}" data-field="time"/>
+                </div>
+            </div>
+            <div>
+                <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.location')}</label>
+                <div class="relative mb-md">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">location_on</span>
+                    <input class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg pl-9 pr-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" placeholder="${t('manual.location_placeholder')}" data-field="location"/>
+                </div>
+                <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.meeting_link')}</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">link</span>
+                    <input class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg pl-9 pr-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" placeholder="${t('manual.link_placeholder')}" data-field="link"/>
+                </div>
+            </div>
+            <div class="bg-surface-container rounded-lg p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">notifications</span> ${t('manual.reminder')}
+                    </label>
+                    <div class="flex bg-surface-container-low rounded-md p-0.5 border border-outline-variant/30 reminder-toggle" data-card="${i}">
+                        <button onclick="setReminder(${i},'once',this)" class="px-2 py-0.5 text-[10px] font-bold rounded bg-surface-container-lowest shadow-sm text-primary">${t('manual.once')}</button>
+                        <button onclick="setReminder(${i},'recurring',this)" class="px-2 py-0.5 text-[10px] font-bold rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors">${t('manual.recurring')}</button>
+                    </div>
+                </div>
+                <div class="reminder-once" data-card="${i}">
+                    <div class="flex gap-sm">
+                        <input class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date" value="${today}" data-field="rem-date"/>
+                        <input class="w-24 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="time" value="09:00" data-field="rem-time"/>
+                    </div>
+                </div>
+                <div class="reminder-recurring hidden flex-col gap-2" data-card="${i}">
+                    <div class="flex gap-sm items-center">
+                        <input class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date" value="${today}" data-field="rec-start"/>
+                        <input class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date" value="${today}" data-field="rec-end"/>
+                        <input class="w-24 bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-md px-2 py-1 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="time" value="09:00" data-field="rec-time"/>
+                    </div>
+                    <div class="flex justify-between gap-1 mt-1" data-card="${i}">
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">M</button>
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">T</button>
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">W</button>
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">T</button>
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">F</button>
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">S</button>
+                        <button onclick="this.classList.toggle('bg-primary');this.classList.toggle('text-on-primary');this.classList.toggle('text-on-surface-variant')" class="w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container">S</button>
+                    </div>
+                    <p class="text-[10px] text-primary font-medium mt-1 uppercase tracking-tighter">${t('manual.daily')}</p>
+                </div>
+            </div>
+            <div>
+                <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.priority')}</label>
+                <div class="flex bg-surface-container-low rounded-lg p-1 priority-group">
+                    <button onclick="setCardPriority(this,'low')" class="flex-1 font-label-md text-label-md py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container">${t('manual.low')}</button>
+                    <button onclick="setCardPriority(this,'med')" class="flex-1 font-label-md text-label-md py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container">${t('manual.med')}</button>
+                    <button onclick="setCardPriority(this,'high')" class="flex-1 font-label-md text-label-md py-1.5 rounded-md bg-surface-container-lowest shadow-sm text-primary">${t('manual.high')}</button>
+                </div>
+            </div>
+            <div>
+                <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">${t('manual.notes')}</label>
+                <textarea class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors resize-none" rows="2" placeholder="${t('manual.notes_placeholder')}" data-field="notes"></textarea>
+            </div>
+        </div>
+    </article>`;
+    document.getElementById('manual-cards').appendChild(div);
+    updateManualCount();
+}
+
+function removeCard(i) {
+    document.getElementById(`card-${i}`).remove();
+    updateManualCount();
+    if (document.querySelectorAll('#manual-cards article').length === 0) {
+        eventCardIdx = 0;
+    }
+}
+
+function setReminder(cardId, type, btn) {
+    const card = document.getElementById(`card-${cardId}`);
+    const toggle = card.querySelector('.reminder-toggle');
+    toggle.querySelectorAll('button').forEach(b => {
+        b.className = 'px-2 py-0.5 text-[10px] font-bold rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors';
+    });
+    btn.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-surface-container-lowest shadow-sm text-primary';
+    card.querySelector('.reminder-once').classList.toggle('hidden', type !== 'once');
+    card.querySelector('.reminder-recurring').classList.toggle('hidden', type !== 'recurring');
+}
+
+function setCardPriority(btn, p) {
+    btn.parentElement.querySelectorAll('button').forEach(b => {
+        b.classList.remove('bg-surface-container-lowest','shadow-sm','text-primary');
+        b.classList.add('text-on-surface-variant');
+    });
+    btn.classList.add('bg-surface-container-lowest','shadow-sm','text-primary');
+    btn.classList.remove('text-on-surface-variant');
+}
+
+function updateManualCount() {
+    const count = document.querySelectorAll('#manual-cards article').length;
+    document.getElementById('manual-count').textContent = count;
+    // Update confirm button text
+    const btn = document.querySelector('#manual-actions button');
+    if (btn) btn.innerHTML = `<span class="material-symbols-outlined mr-sm group-hover:scale-110 transition-transform">check_circle</span> ${t('add.confirm_add').replace('%d', '<span id="manual-count">'+count+'</span>')}`;
+    document.getElementById('manual-actions').style.display = count > 0 ? 'block' : 'none';
+}
+
+function clearManual() {
+    document.getElementById('manual-cards').innerHTML = '';
+    eventCardIdx = 0;
+    updateManualCount();
+}
+
+async function confirmManual() {
+    const cards = document.querySelectorAll('#manual-cards article');
+    let count = 0;
+    for (const card of cards) {
+        const title = card.querySelector('[data-field="title"]')?.value?.trim();
+        if (!title) continue;
+        const date = card.querySelector('[data-field="date"]')?.value || '';
+        const time = card.querySelector('[data-field="time"]')?.value?.trim() || '';
+        const location = card.querySelector('[data-field="location"]')?.value?.trim() || '';
+        const link = card.querySelector('[data-field="link"]')?.value?.trim() || '';
+        const notes = card.querySelector('[data-field="notes"]')?.value?.trim() || '';
+        const prioBtn = card.querySelector('.priority-group .bg-surface-container-lowest');
+        const priority = prioBtn?.textContent?.trim()?.toLowerCase() || 'high';
+        const isRecurring = !card.querySelector('.reminder-recurring').classList.contains('hidden');
+        const days = Array.from(card.querySelectorAll('.reminder-recurring button.bg-primary')).map(b=>b.textContent);
+
+        let summary = `[${priority.toUpperCase()} Priority]`;
+        if (date) summary += `\nDate: ${date}`;
+        if (time) summary += `\nTime: ${time}`;
+        if (location) summary += `\nLocation: ${location}`;
+        if (link) summary += `\nLink: ${link}`;
+        if (isRecurring) {
+            const rs = card.querySelector('[data-field="rec-start"]')?.value || '';
+            const re = card.querySelector('[data-field="rec-end"]')?.value || '';
+            const rt = card.querySelector('[data-field="rec-time"]')?.value || '';
+            summary += `\nRecurring: ${rs} to ${re} at ${rt}, days: ${days.join(',') || 'none'}`;
+        } else {
+            const rd = card.querySelector('[data-field="rem-date"]')?.value || '';
+            const rtm = card.querySelector('[data-field="rem-time"]')?.value || '';
+            if (rd) summary += `\nReminder: ${rd} at ${rtm}`;
+        }
+        if (notes) summary += `\nNotes: ${notes}`;
+
+        try {
+            await fetch('/api/process/text', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: title + '\n' + summary})
+            });
+            count++;
+        } catch(e) { console.error(e); }
+    }
+    if (count > 0) {
+        alert(t('add.added_success').replace('%d', count));
+        clearManual();
+        toggleMode(); // go back to AI mode
+    }
+}
+
+// AI mode textarea Enter to send
+document.addEventListener('DOMContentLoaded', () => {
+    const ta = document.getElementById('text-input');
+    if (ta) {
+        ta.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+        });
+    }
+});
+</script>
+{% endblock %}
