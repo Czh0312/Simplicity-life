@@ -780,7 +780,7 @@ function startVoice(){
   recognition.onstart=function(){updateVoiceUI(true)};
   recognition.onend=function(){updateVoiceUI(false)};
   recognition.onerror=function(e){updateVoiceUI(false);if(e.error==='not-allowed')alert(currentLang==='zh'?'请在设置中开启麦克风权限':'Please enable microphone in settings')};
-  recognition.onresult=function(e){var text=e.results[0][0].transcript;if(text){showResult(text);callAI(getSystemPrompt('text'),text,function(result){pendingAIResult=result;showResult(result)})}}
+  recognition.onresult=function(e){var text=e.results[0][0].transcript;if(text){showResult(text);callAI(getSystemPrompt('text'),text,function(result){pendingAIResultArray=[result];showResult(result)})}}
  }
  try{recognition.start()}catch(e){recognition.stop();recognition.start()}
 }
@@ -790,13 +790,15 @@ function updateVoiceUI(rec){
  if(rec){icon.textContent='graphic_eq';label.textContent=currentLang==='zh'?'正在倾听...':'Listening...';status.textContent=currentLang==='zh'?'请说话...':'Speak now...';btn.classList.add('animate-pulse');btn.style.background='#ba1a1a'}
  else{icon.textContent='mic';label.textContent=t('add.voice_note');status.textContent=t('add.voice_speak');btn.classList.remove('animate-pulse');btn.style.background=''}
 }
-function sendVoice(blob){}function sendVoice(blob){
+function sendVoice(blob){
+ showResult(currentLang==='zh'?'语音已记录，可手动编辑':'Voice note saved. Edit manually.');
+}function sendVoice(blob){
  showResult('Voice note saved. DeepSeek does not support audio input yet. The recording has been saved as a note.');
  addItem({type:'voice',content:'Voice Note ('+new Date().toLocaleTimeString()+')',ai_summary:'Voice recording saved. Open to add details manually.'})
 }
 function uploadImages(input){
  var files=input.files;if(!files.length)return;
- showResult('Compressing & sending to AI...');
+ showResult(currentLang==='zh'?'正在压缩并分析图片 (共 '+files.length+' 张)...':'Compressing & analyzing '+files.length+' image(s)...');
  var results=[];var done=0;
  Array.from(files).forEach(function(file){
   var reader=new FileReader();
@@ -810,7 +812,10 @@ function uploadImages(input){
     canvas.getContext('2d').drawImage(img,0,0,width,height);
     var compressedBase64=canvas.toDataURL('image/jpeg',0.6);
     var cont=[{image_url:{url:compressedBase64}},{text:'请提取图片中的日程信息，以 JSON 数组格式输出。'}];
-    callAI(getSystemPrompt('image'),cont,function(text){pendingAIResult=text;showResult(text)},true);
+    callAI(getSystemPrompt('image'),cont,function(text){
+     results.push(text);done++;
+     if(done===files.length){pendingAIResultArray=results;showResult(results.join('\n\n---\n\n'))}
+    },true);
    };
    img.src=e.target.result;
   };
@@ -823,25 +828,25 @@ function uploadImage(input){uploadImages(input);}function pasteLink(){
  var url=prompt(t('add.paste_link'));
  if(!url)return;
  showResult(t('add.analyzing_link'));
- callAI(getSystemPrompt('link'),url,function(text){pendingAIResult=text;showResult(text)})
+ callAI(getSystemPrompt('link'),url,function(text){pendingAIResultArray=[text];showResult(text)})
 }
 function sendText(){
  var text=document.getElementById('text-input').value.trim();if(!text)return;
  showResult(t('add.thinking'));document.getElementById('text-input').value='';
- callAI(getSystemPrompt('text'),text,function(result){pendingAIResult=result;showResult(result)})
+ callAI(getSystemPrompt('text'),text,function(result){pendingAIResultArray=[result];showResult(result)})
 }
 function showResult(text){var panel=document.getElementById('result-panel'),c=document.getElementById('result-content');panel.classList.remove('hidden');c.innerHTML='<div class="whitespace-pre-wrap mb-md">'+esc(text)+'</div><button onclick="reviewAIResult()" class="w-full py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md">Review & Confirm</button>';panel.scrollIntoView({behavior:'smooth',block:'center'})}
 
-var pendingAIResult='';
+var pendingAIResultArray=[];
 function reviewAIResult(){
- if(!pendingAIResult)return;
- showParsedEvents([pendingAIResult]);
+ if(!pendingAIResultArray||pendingAIResultArray.length===0)return;
+ showParsedEvents(pendingAIResultArray);
  document.getElementById('result-panel').classList.add('hidden');
 }
 
 function showParsedEvents(results){
  var allText=results.join('\n');
- pendingAIResult=allText;
+ pendingAIResultArray=[allText];
  var events=[];
  results.forEach(function(text){
   try{
