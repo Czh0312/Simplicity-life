@@ -811,7 +811,7 @@ function uploadImages(input){
     canvas.width=width;canvas.height=height;
     canvas.getContext('2d').drawImage(img,0,0,width,height);
     var compressedBase64=canvas.toDataURL('image/jpeg',0.6);
-    var cont=[{image_url:{url:compressedBase64}}];
+    var cont=[{image_url:{url:compressedBase64}},{text:'请提取图片中的日程信息，以 JSON 数组格式输出。'}];
     callAI(getSystemPrompt('image'),cont,function(text){pendingAIResult=text;showResult(text)},true);
    };
    img.src=e.target.result;
