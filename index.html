@@ -432,7 +432,7 @@ function callAI(system,content,cb,isImage){
  fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
   method:'POST',signal:controller.signal,
   headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-  body:JSON.stringify({model:isImage?'qwen-vl-plus':'qwen-plus',messages:messages,max_tokens:1500,temperature:0.2})
+  body:JSON.stringify({model:isImage?'qwen3.6-plus':'qwen-plus',messages:messages,max_tokens:1500,temperature:0.1,top_p:0.8})
  }).then(function(r){clearTimeout(timeout);return r.json()}).then(function(d){
   clearTimeout(timeout);
   if(d.error){cb('API Error: '+d.error.message)}else{cb(d.choices[0].message.content)}
