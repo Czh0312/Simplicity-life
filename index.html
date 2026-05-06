@@ -422,20 +422,26 @@ function callAI(system,content,cb,isImage){
  if(!key){cb('[AI未配置] 请在 Profile 页面设置 DashScope API Key。');return}
  var messages=[];
  if(isImage){
-  messages.push({role:'user',content:[{type:'image_url',image_url:{url:content[0].image_url.url}},{type:'text',text:system+'\n\n'+content[1].text}]});
+  messages.push({role:'user',content:[{type:'image_url',image_url:{url:content[0].image_url.url}},{type:'text',text:system+'
+
+请提取图片中的日程信息，以 JSON 数组格式输出。'}]});
  }else{
   messages.push({role:'system',content:system});
   messages.push({role:'user',content:content});
  }
  var controller=new AbortController();
- var timeout=setTimeout(function(){controller.abort();cb('Request timed out.')},isImage?60000:20000);
+ var timeout=setTimeout(function(){controller.abort();cb('Request timed out.')},40000);
  fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
   method:'POST',signal:controller.signal,
   headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
   body:JSON.stringify({model:isImage?'qwen-vl-max-latest':'qwen-plus',messages:messages,max_tokens:1500,temperature:0.1})
  }).then(function(r){clearTimeout(timeout);return r.json()}).then(function(d){
   clearTimeout(timeout);
-  if(d.error){cb('API Error: '+d.error.message)}else{cb(d.choices[0].message.content)}
+  if(d.error){cb('API Error: '+(d.error.message||JSON.stringify(d.error)))}
+  else if(d.choices&&d.choices[0]&&d.choices[0].message){cb(d.choices[0].message.content)}
+  else if(d.output&&d.output.text){cb(d.output.text)}
+  else if(d.code&&d.code!=='200'){cb('API Error code: '+d.code+' '+JSON.stringify(d))}
+  else{cb('Unknown response: '+JSON.stringify(d).slice(0,300))}
  }).catch(function(e){clearTimeout(timeout);cb(e.name==='AbortError'?'Request timed out.':'Network error: '+e.message)})
 }
 
@@ -792,7 +798,7 @@ function sendVoice(blob){}function sendVoice(blob){
 }
 function uploadImages(input){
  var files=input.files;if(!files.length)return;
- showResult(currentLang==='zh'?'正在压缩并分析图片...':'Compressing & Analyzing...');
+ showResult('Compressing & sending to AI...');
  var results=[];var done=0;
  Array.from(files).forEach(function(file){
   var reader=new FileReader();
@@ -803,10 +809,10 @@ function uploadImages(input){
     var max_size=1000;var width=img.width;var height=img.height;
     if(width>height){if(width>max_size){height*=max_size/width;width=max_size}}else{if(height>max_size){width*=max_size/height;height=max_size}}
     canvas.width=width;canvas.height=height;
-    var ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,width,height);
+    canvas.getContext('2d').drawImage(img,0,0,width,height);
     var compressedBase64=canvas.toDataURL('image/jpeg',0.6);
-    var cont=[{image_url:{url:compressedBase64}},{text:'请精准提取这张图片中的所有日程信息，包含标题、日期、具体时间、地点、链接和备注，以 JSON 数组格式输出。'}];
-    callAI(getSystemPrompt('image'),cont,function(text){results.push(text);done++;if(done===files.length){showParsedEvents(results)}},true);
+    var cont=[{image_url:{url:compressedBase64}}];
+    callAI(getSystemPrompt('image'),cont,function(text){pendingAIResult=text;showResult(text)},true);
    };
    img.src=e.target.result;
   };
