@@ -269,7 +269,10 @@ function openDatePicker(mode){
   var ym=anchorDate.toISOString().slice(0,7);
   box.innerHTML='<div class="text-center mb-md"><span class="font-h3 text-h3 text-on-surface">Select Month</span></div><input id="jp-input" type="month" class="w-full bg-surface-container-low border border-outline-variant focus:border-primary rounded-lg px-3 py-3 font-body-md text-body-md text-on-surface outline-none mb-md" value="'+ym+'"><div class="flex gap-sm"><button id="jp-cancel" class="flex-1 py-3 rounded-lg bg-surface-container-high text-on-surface font-label-md">Cancel</button><button id="jp-confirm" class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-label-md">Go</button></div>';
  } else {
-  box.innerHTML='<div class="text-center mb-md"><span class="font-h3 text-h3 text-on-surface">Select Year</span></div><input id="jp-input" type="number" min="2000" max="2100" class="w-full bg-surface-container-low border border-outline-variant focus:border-primary rounded-lg px-3 py-3 font-body-md text-body-md text-on-surface outline-none mb-md" value="'+anchorDate.getFullYear()+'"><div class="flex gap-sm"><button id="jp-cancel" class="flex-1 py-3 rounded-lg bg-surface-container-high text-on-surface font-label-md">Cancel</button><button id="jp-confirm" class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-label-md">Go</button></div>';
+  var currentY=anchorDate.getFullYear();
+  var options='';
+  for(var i=currentY-20;i<=currentY+20;i++){options+='<option value="'+i+'"'+(i===currentY?' selected':'')+'>'+i+''+(currentLang==='zh'?' 年':'')+'</option>'}
+  box.innerHTML='<div class="text-center mb-md"><span class="font-h3 text-h3 text-on-surface">Select Year</span></div><select id="jp-input" class="w-full bg-surface-container-low border border-outline-variant focus:border-primary rounded-lg px-3 py-3 font-body-md text-body-md text-on-surface outline-none cursor-pointer">'+options+'</select><div class="flex gap-sm mt-md"><button id="jp-cancel" class="flex-1 py-3 rounded-lg bg-surface-container-high text-on-surface font-label-md">Cancel</button><button id="jp-confirm" class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-label-md">Go</button></div>';
  }
 
  overlay.appendChild(box);
