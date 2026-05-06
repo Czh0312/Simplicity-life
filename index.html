@@ -393,8 +393,9 @@ function deleteItem(id){var items=getItems().filter(function(i){return i.id!==id
 function getItem(id){return getItems().find(function(i){return Number(i.id)===Number(id)})}
 
 // ── API Key ──
-function getApiKey(){return localStorage.getItem('simplicity_api_key')||''}
-function saveApiKey(){var key=document.getElementById('api-key-input').value.trim();localStorage.setItem('simplicity_api_key',key);var s=document.getElementById('api-key-status');s.classList.remove('hidden');setTimeout(function(){s.classList.add('hidden')},2000)}
+var DEMO_API_KEY='sk-235d797fb7b144bc96809f1f7391cdf0';
+function getApiKey(){var savedKey=localStorage.getItem('simplicity_api_key');return (savedKey&&savedKey.trim()!=='')?savedKey:DEMO_API_KEY}
+function saveApiKey(){var key=document.getElementById('api-key-input').value.trim();if(key===DEMO_API_KEY||key===''){localStorage.removeItem('simplicity_api_key')}else{localStorage.setItem('simplicity_api_key',key)}var s=document.getElementById('api-key-status');s.classList.remove('hidden');setTimeout(function(){s.classList.add('hidden')},2000)}
 function loadApiKey(){document.getElementById('api-key-input').value=getApiKey()}
 
 function getSystemPrompt(type){
