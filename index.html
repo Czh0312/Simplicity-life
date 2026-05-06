@@ -420,10 +420,11 @@ function getSystemPrompt(type){
 function callAI(system,content,cb,isImage){
  var key=getApiKey();
  if(!key){cb('[AI未配置] 请在 Profile 页面设置 DashScope API Key。');return}
- var messages=[{role:'system',content:system}];
+ var messages=[];
  if(isImage){
-  messages.push({role:'user',content:[{type:'image_url',image_url:{url:content[0].image_url.url}},{type:'text',text:content[1].text}]});
+  messages.push({role:'user',content:[{type:'image_url',image_url:{url:content[0].image_url.url}},{type:'text',text:system+'\n\n'+content[1].text}]});
  }else{
+  messages.push({role:'system',content:system});
   messages.push({role:'user',content:content});
  }
  var controller=new AbortController();
@@ -431,7 +432,7 @@ function callAI(system,content,cb,isImage){
  fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
   method:'POST',signal:controller.signal,
   headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-  body:JSON.stringify({model:isImage?'qwen-vl-ocr-latest':'qwen3.6-plus',messages:messages,max_tokens:1500,temperature:0.1})
+  body:JSON.stringify({model:isImage?'qwen-vl-max':'qwen3.6-plus',messages:messages,max_tokens:1500,temperature:0.1})
  }).then(function(r){clearTimeout(timeout);return r.json()}).then(function(d){
   clearTimeout(timeout);
   if(d.error){cb('API Error: '+d.error.message)}else{cb(d.choices[0].message.content)}
