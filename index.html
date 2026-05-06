@@ -237,6 +237,21 @@ body{min-height:max(884px,100dvh)}
   </div>
 </div>
 
+<!-- Map Action Sheet -->
+<div id="map-sheet" class="hidden fixed inset-0 z-[1100]" onclick="closeMapOptions()">
+ <div class="absolute inset-0 bg-black/40"></div>
+ <div class="absolute bottom-0 left-0 right-0 px-4 pb-safe">
+  <div class="bg-white dark:bg-[#2e3032] rounded-2xl mb-3 overflow-hidden shadow-xl">
+   <div class="px-4 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/20">Navigate with</div>
+   <button onclick="openMap('amap')" class="w-full py-4 text-center text-primary font-medium hover:bg-surface-variant transition-colors border-b border-outline-variant/30">高德地图 (Amap)</button>
+   <button onclick="openMap('baidu')" class="w-full py-4 text-center text-primary font-medium hover:bg-surface-variant transition-colors border-b border-outline-variant/30">百度地图 (Baidu)</button>
+   <button onclick="openMap('tencent')" class="w-full py-4 text-center text-primary font-medium hover:bg-surface-variant transition-colors border-b border-outline-variant/30">腾讯地图 (Tencent)</button>
+   <button onclick="openMap('system')" class="w-full py-4 text-center text-primary font-medium hover:bg-surface-variant transition-colors">系统默认地图 (Apple/Google)</button>
+  </div>
+  <button onclick="closeMapOptions()" class="w-full py-4 bg-white dark:bg-[#2e3032] rounded-2xl text-on-surface font-bold text-center shadow-lg">取消</button>
+ </div>
+</div>
+
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="fixed bottom-0 left-0 right-0 flex justify-around items-center min-h-[80px] py-2 pb-safe px-4 w-full z-50 bg-white/90 backdrop-blur-lg border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] text-[11px] font-medium tracking-wide uppercase">
  <button onclick="navTo('home')" id="nav-home" class="flex flex-col items-center justify-center hover:text-primary active:scale-90 transition-all duration-200 w-16 gap-1 no-underline text-slate-400">
@@ -252,7 +267,12 @@ body{min-height:max(884px,100dvh)}
 var I18N={zh:{"nav.home":"首页","nav.ai_add":"AI 添加","nav.profile":"我的","home.today":"今天","home.this_week":"本周","home.month":"月","home.year":"年","home.loading":"加载中...","home.nothing":"暂无内容","home.add_something":"去添加","home.tap_to_edit":"点击编辑详情","home.failed":"加载失败","edit.title":"编辑事件","edit.event_title":"事件标题","edit.date":"日期","edit.time":"时间","edit.location":"地点","edit.meeting_link":"会议链接","edit.reminder":"提醒","edit.once":"单次","edit.recurring":"循环","edit.priority":"优先级","edit.low":"低","edit.med":"中","edit.high":"高","edit.notes":"备注","edit.delete":"删除","edit.save":"保存","edit.add_location":"添加地点...","edit.add_link":"添加链接...","edit.time_placeholder":"例如 9:00 AM - 10:00 AM","edit.notes_placeholder":"添加备注...","edit.delete_confirm":"确认删除此事件？","add.ai_title":"AI 助手","add.add_to_life":"添加到你的生活","add.ai_subtitle":"记录细节，让 AI 帮你组织和安排。","add.voice_note":"语音笔记","add.voice_speak":"说出你的想法，解放双手","add.voice_recording":"录音中...","add.voice_tap_stop":"点击停止","add.upload_image":"上传图片","add.image_subtitle":"海报、门票、截图","add.paste_link":"粘贴链接","add.link_subtitle":"文章、邀请、地点","add.text_placeholder":"或直接输入...","add.ai_analysis":"AI 分析","add.cancel":"取消","add.review_details":"确认详情","add.review_subtitle":"请确认新日程的详细信息。","profile.settings":"设置","profile.local_mode":"本地模式","profile.language":"语言","profile.english":"English","profile.chinese":"简体中文 (Chinese)","profile.appearance":"外观","profile.light":"浅色","profile.dark":"深色","profile.data_sync":"数据同步","profile.export_data":"导出数据","profile.clear_data":"清空数据","profile.clear_confirm":"删除所有数据？此操作不可撤销。","profile.clear_failed":"清空数据失败。","add.manual_title":"手动添加"},en:{"nav.home":"Home","nav.ai_add":"AI Add","nav.profile":"Profile","home.today":"Today","home.this_week":"This Week","home.month":"Month","home.year":"Year","home.loading":"Loading...","home.nothing":"Nothing here yet.","home.add_something":"Add something","home.tap_to_edit":"Tap to edit details","home.failed":"Failed to load items.","edit.title":"Edit Event","edit.event_title":"Event Title","edit.date":"Date","edit.time":"Time","edit.location":"Location","edit.meeting_link":"Meeting Link","edit.reminder":"Reminder","edit.once":"One-time","edit.recurring":"Recurring","edit.priority":"Priority","edit.low":"Low","edit.med":"Med","edit.high":"High","edit.notes":"Notes","edit.delete":"Delete","edit.save":"Save","edit.add_location":"Add location...","edit.add_link":"Add meeting link...","edit.time_placeholder":"e.g. 9:00 AM - 10:00 AM","edit.notes_placeholder":"Add notes...","edit.delete_confirm":"Delete this event?","add.ai_title":"AI Assistant","add.add_to_life":"Add to your life","add.ai_subtitle":"Capture the details. Let AI handle the organization and scheduling.","add.voice_note":"Voice Note","add.voice_speak":"Speak your mind, hands-free","add.voice_recording":"Recording...","add.voice_tap_stop":"Tap to stop","add.upload_image":"Upload Image","add.image_subtitle":"Posters, tickets, screenshots","add.paste_link":"Paste Link","add.link_subtitle":"Articles, invites, locations","add.text_placeholder":"Or just type it here...","add.ai_analysis":"AI Analysis","add.cancel":"Cancel","add.review_details":"Review Details","add.review_subtitle":"Please confirm the details of your new schedule item.","profile.settings":"Settings","profile.local_mode":"Local Mode","profile.language":"Language","profile.english":"English","profile.chinese":"简体中文 (Chinese)","profile.appearance":"Appearance","profile.light":"Light","profile.dark":"Dark","profile.data_sync":"Data Sync","profile.export_data":"Export Data","profile.clear_data":"Clear All Data","profile.clear_confirm":"Delete all data? This cannot be undone.","profile.clear_failed":"Failed to clear data.","add.manual_title":"Add by yourself"}};
 var currentLang=localStorage.getItem('lang')||'zh';
 function t(k){return (I18N[currentLang]&&I18N[currentLang][k])||(I18N.en[k])||k}
-function setLang(l){currentLang=l;localStorage.setItem('lang',l);applyI18n();updateLangUI();}
+function setLang(l){currentLang=l;localStorage.setItem('lang',l);var currentPendingLocation='';
+function showMapOptions(loc){currentPendingLocation=loc;document.getElementById('map-sheet').classList.remove('hidden')}
+function closeMapOptions(){document.getElementById('map-sheet').classList.add('hidden')}
+function openMap(type){var loc=encodeURIComponent(currentPendingLocation);var url='';if(type==='amap'){url='https://uri.amap.com/search?keyword='+loc}else if(type==='baidu'){url='https://api.map.baidu.com/geocoder?address='+loc+'&output=html'}else if(type==='tencent'){url='https://apis.map.qq.com/uri/v1/search?keyword='+loc}else{url='https://maps.apple.com/?q='+loc}if(url)window.open(url,'_blank');closeMapOptions()}
+
+applyI18n();updateLangUI();}
 // Quick jump date picker
 function openDatePicker(mode){
  var overlay=document.createElement('div');
@@ -328,6 +348,11 @@ function openQuickMenu(e){
   document.addEventListener('click',function closeMenu(){menu.remove();document.removeEventListener('click',closeMenu)});
  },50);
 }
+
+var currentPendingLocation='';
+function showMapOptions(loc){currentPendingLocation=loc;document.getElementById('map-sheet').classList.remove('hidden')}
+function closeMapOptions(){document.getElementById('map-sheet').classList.add('hidden')}
+function openMap(type){var loc=encodeURIComponent(currentPendingLocation);var url='';if(type==='amap'){url='https://uri.amap.com/search?keyword='+loc}else if(type==='baidu'){url='https://api.map.baidu.com/geocoder?address='+loc+'&output=html'}else if(type==='tencent'){url='https://apis.map.qq.com/uri/v1/search?keyword='+loc}else{url='https://maps.apple.com/?q='+loc}if(url)window.open(url,'_blank');closeMapOptions()}
 
 applyI18n();
 function applyI18n(){document.querySelectorAll('[data-i18n]').forEach(function(e){var k=e.getAttribute('data-i18n');var v=t(k);if(v)e.textContent=v});document.querySelectorAll('[data-i18n-placeholder]').forEach(function(e){var k=e.getAttribute('data-i18n-placeholder');var v=t(k);if(v)e.placeholder=v});document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'}
@@ -502,12 +527,12 @@ function renderDay(){
   if(eventLoc||eventLink){
    actionBtns+='<div class=\"flex gap-2 mt-2 pt-2 border-t border-outline-variant/20\">';
    if(eventLoc){
-    var mapUrl='https://uri.amap.com/search?keyword='+encodeURIComponent(eventLoc);
-    actionBtns+='<a href=\"'+mapUrl+'\" target=\"_blank\" onclick=\"event.stopPropagation()\" class=\"flex items-center gap-1 text-[11px] text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors max-w-[140px] truncate no-underline\"><span class=\"material-symbols-outlined text-[14px]\">location_on</span> <span class=\"truncate\">'+esc(eventLoc)+'</span></a>';
+
+	    actionBtns+='<button onclick="event.stopPropagation();showMapOptions(\''+esc(eventLoc)+'\')" class="flex items-center gap-1 text-[11px] text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors max-w-[140px] truncate"><span class="material-symbols-outlined text-[14px]">location_on</span> <span class="truncate">'+esc(eventLoc)+'</span></button>';
    }
    if(eventLink){
     var safeLink=eventLink;if(!/^[a-zA-Z]+:\/\//.test(safeLink))safeLink='https://'+safeLink;
-    actionBtns+='<a href=\"'+safeLink+'\" target=\"_blank\" onclick=\"event.stopPropagation()\" class=\"flex items-center gap-1 text-[11px] text-tertiary bg-tertiary/10 hover:bg-tertiary/20 px-2 py-1 rounded-md transition-colors max-w-[140px] truncate no-underline\"><span class=\"material-symbols-outlined text-[14px]\">link</span> <span class=\"truncate\">打开链接</span></a>';
+    actionBtns+='<a href=\"'+safeLink+'\" target=\"_blank\" onclick=\"event.stopPropagation()\" class=\"flex items-center gap-1 text-[11px] text-tertiary bg-tertiary/10 hover:bg-tertiary/20 px-2 py-1 rounded-md transition-colors max-w-[140px] truncate no-underline\"><span class=\"material-symbols-outlined text-[14px]\">link</span> <span class=\"truncate\">'+(currentLang==='zh'?'打开链接':'Open Link')+'</span></a>';
    }
    actionBtns+='</div>';
   }
