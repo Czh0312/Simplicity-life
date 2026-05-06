@@ -166,7 +166,7 @@ body{min-height:max(884px,100dvh)}
   <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg">
    <div class="flex items-center gap-3 mb-4 text-primary"><span class="material-symbols-outlined">key</span><h3 class="font-h3 text-body-lg font-semibold text-on-background">API Key</h3></div>
    <input id="api-key-input" type="password" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors mb-2" placeholder="sk-..."/>
-   <p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Enter your DeepSeek API key to enable AI features. Stored locally in your browser.</p>
+   <p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Enter your DashScope (Alibaba Cloud) API key for AI features. Stored locally.</p>
    <button onclick="saveApiKey()" class="w-full py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md">Save Key</button>
    <p id="api-key-status" class="font-label-sm text-label-sm text-green-600 mt-1 hidden">Key saved ✓</p>
   </section>
@@ -415,24 +415,28 @@ function getSystemPrompt(type){
  return '你是一个专业的生活助手，任务是从用户的自然语言对话中提取日程安排。\n请仔细分析用户的话语，特别注意捕捉和转换口语化的时间表达（如"明天"、"下周三"、"周末"、"下班后"）。\n\n【系统当前时间】：'+timeStr+'\n\n提取规则：\n1. 强时间转换：必须基于"系统当前时间"将相对时间推算为绝对日期（YYYY-MM-DD）。\n2. 模糊时间处理：若只有大致时间（如"下午"或"下班后"），time 字段可填"14:00(推测)"或"18:00(推测)"，并在 notes 中保留用户的原话语境。\n3. 若某项信息缺失，请在对应字段填写 ""。\n4. 必须仅输出合法的 JSON 数组结构，严禁输出任何解释、确认废话或 markdown 代码块标记。\n5. 根据事件的紧急和重要程度，在 priority 字段输出 high、med 或 low。\n6. link 字段请提取网页链接或会议链接。\n\n输出格式示例：\n'+jsonExample;
 }
 
-// ── DeepSeek API ──
+// ── DashScope API ──
+// ── DashScope API (Qwen) ──
 function callAI(system,content,cb,isImage){
  var key=getApiKey();
- if(!key){cb('[AI未配置] 请在 Profile 页面设置 DeepSeek API Key。');return}
+ if(!key){cb('[AI未配置] 请在 Profile 页面设置 DashScope API Key。');return}
  var messages=[{role:'system',content:system}];
  if(typeof content==='string'){messages.push({role:'user',content:content})}
- else{messages.push({role:'user',content:content})}
- // Add timeout (40s for images, 20s for text)
+ else if(Array.isArray(content)){
+  // Vision format: [{image_url:{url:...}}, {text:'...'}]
+  var userMsg={role:'user',content:content};
+  messages.push(userMsg);
+ } else {messages.push({role:'user',content:content})}
  var controller=new AbortController();
- var timeout=setTimeout(function(){controller.abort();cb('Request timed out. Image may be too large or network is slow.')},isImage?40000:20000);
- fetch('https://api.deepseek.com/chat/completions',{
+ var timeout=setTimeout(function(){controller.abort();cb('Request timed out.')},isImage?40000:20000);
+ fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
   method:'POST',signal:controller.signal,
   headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-  body:JSON.stringify({model:'deepseek-chat',max_tokens:600,messages:messages})
+  body:JSON.stringify({model:isImage?'qwen-vl-plus':'qwen-plus',messages:messages,max_tokens:1500,temperature:0.2})
  }).then(function(r){clearTimeout(timeout);return r.json()}).then(function(d){
   clearTimeout(timeout);
   if(d.error){cb('API Error: '+d.error.message)}else{cb(d.choices[0].message.content)}
- }).catch(function(e){clearTimeout(timeout);cb(e.name==='AbortError'?'Request timed out. Try a smaller image.':'Network error: '+e.message)})
+ }).catch(function(e){clearTimeout(timeout);cb(e.name==='AbortError'?'Request timed out.':'Network error: '+e.message)})
 }
 
 // ── Home View (Day/Week/Month/Year) ──
@@ -765,21 +769,24 @@ document.addEventListener('DOMContentLoaded',function(){
 // ── AI Functions ──
 var mediaRecorder=null,audioChunks=[],isRecording=false;
 function startVoice(){
- if(isRecording){stopRecording();return}
- navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-  var mt=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'audio/webm';
-  mediaRecorder=new MediaRecorder(stream,{mimeType:mt});audioChunks=[];
-  mediaRecorder.ondataavailable=function(e){if(e.data.size>0)audioChunks.push(e.data)};
-  mediaRecorder.onstop=function(){stream.getTracks().forEach(function(t){t.stop()});var blob=new Blob(audioChunks,{type:mt});sendVoice(blob)};
-  mediaRecorder.start();isRecording=true;updateVoiceUI(true);
- }).catch(function(){alert(t('add.mic_denied'))})
+ if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Your browser does not support speech recognition. Use Chrome or Safari.');return}
+ var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ var recognition=new SR();
+ recognition.lang=currentLang==='zh'?'zh-CN':'en-US';
+ recognition.continuous=false;
+ updateVoiceUI(true);
+ recognition.onresult=function(e){var text=e.results[0][0].transcript;showResult(text);callAI(getSystemPrompt('text'),text,function(result){pendingAIResult=result;showResult(result)})};
+ recognition.onerror=function(){updateVoiceUI(false)};
+ recognition.onend=function(){updateVoiceUI(false)};
+ recognition.start();
 }
-function stopRecording(){if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();isRecording=false;updateVoiceUI(false)}
+function stopRecording(){}
 function updateVoiceUI(rec){
  var icon=document.getElementById('voice-icon'),label=document.getElementById('voice-label'),status=document.getElementById('voice-status'),btn=document.getElementById('btn-voice');
- if(rec){icon.textContent='stop';label.textContent=t('add.voice_recording');status.textContent=t('add.voice_tap_stop');btn.classList.add('animate-pulse');btn.style.background='#ba1a1a'}
+ if(rec){icon.textContent='mic';label.textContent=currentLang==='zh'?'正在听...':'Listening...';status.textContent=currentLang==='zh'?'请说话':'Speak now';btn.classList.add('animate-pulse');btn.style.background='#ba1a1a'}
  else{icon.textContent='mic';label.textContent=t('add.voice_note');status.textContent=t('add.voice_speak');btn.classList.remove('animate-pulse');btn.style.background=''}
 }
+function sendVoice(blob){}
 function sendVoice(blob){
  showResult('Voice note saved. DeepSeek does not support audio input yet. The recording has been saved as a note.');
  addItem({type:'voice',content:'Voice Note ('+new Date().toLocaleTimeString()+')',ai_summary:'Voice recording saved. Open to add details manually.'})
@@ -792,7 +799,7 @@ function uploadImages(input){
   var reader=new FileReader();
   reader.onload=function(){
    var prompt=getSystemPrompt('image');
-   callAI(prompt,[{type:'image_url',image_url:{url:reader.result}},{type:'text',text:'请提取图片中的日程信息'}],function(text){
+   callAI(prompt,[{image_url:{url:reader.result}},{text:'请提取图片中的日程信息'}],function(text){
     results.push(text);done++;
     if(done===files.length){showParsedEvents(results)}
    },true);
