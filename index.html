@@ -422,9 +422,7 @@ function callAI(system,content,cb,isImage){
  if(!key){cb('[AI未配置] 请在 Profile 页面设置 DashScope API Key。');return}
  var messages=[];
  if(isImage){
-  messages.push({role:'user',content:[{type:'image_url',image_url:{url:content[0].image_url.url}},{type:'text',text:system+'
-
-请提取图片中的日程信息，以 JSON 数组格式输出。'}]});
+  messages.push({role:'user',content:[{type:'image_url',image_url:{url:content[0].image_url.url}},{type:'text',text:system+'\\n请提取图片中的日程信息，以 JSON 数组格式输出。'}]});
  }else{
   messages.push({role:'system',content:system});
   messages.push({role:'user',content:content});
