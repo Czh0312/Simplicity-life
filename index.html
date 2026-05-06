@@ -797,16 +797,16 @@ function sendVoice(blob){
  addItem({type:'voice',content:'Voice Note ('+new Date().toLocaleTimeString()+')',ai_summary:'Voice recording saved. Open to add details manually.'})
 }
 function uploadImages(input){
- var files=input.files;if(!files.length)return;
- var results=[];var currentIndex=0;
+ var filesList=input.files;if(!filesList.length)return;
+ var files=Array.from(filesList);var results=[];var currentIndex=0;
  function processNext(){
   if(currentIndex>=files.length){
    pendingAIResultArray=results;
-   showResult(results.join('\n\n---\n\n'));
+   showParsedEvents(results);
    return;
   }
   var file=files[currentIndex];
-  showResult((currentLang==='zh'?'正在分析第 ':'Processing ')+(currentIndex+1)+'/'+files.length+(currentLang==='zh'?' 张图片...':' image(s)...'));
+  showResult((currentLang==='zh'?'正在分析第 ':'Processing ')+(currentIndex+1)+'/'+files.length+(currentLang==='zh'?' 张...':' image(s)...'));
   var reader=new FileReader();
   reader.onload=function(e){
    var img=new Image();
@@ -817,17 +817,14 @@ function uploadImages(input){
     canvas.width=width;canvas.height=height;
     canvas.getContext('2d').drawImage(img,0,0,width,height);
     var compressedBase64=canvas.toDataURL('image/jpeg',0.6);
-    var cont=[{image_url:{url:compressedBase64}},{text:'请提取图片中的日程信息，以 JSON 数组格式输出。'}];
-    callAI(getSystemPrompt('image'),cont,function(text){
-     results.push(text);currentIndex++;processNext();
-    },true);
+    var cont=[{type:'image_url',image_url:{url:compressedBase64}},{type:'text',text:'请精准提取图片中的日程，包含标题、日期、具体时间、地点，以 JSON 数组格式输出。'}];
+    callAI(getSystemPrompt('image'),cont,function(text){results.push(text);currentIndex++;processNext()},true);
    };
    img.src=e.target.result;
   };
   reader.readAsDataURL(file);
  }
- processNext();
- input.value='';
+ processNext();input.value='';
 }
 
 function uploadImage(input){uploadImages(input);}function pasteLink(){
@@ -851,55 +848,36 @@ function reviewAIResult(){
 }
 
 function showParsedEvents(results){
- var allText=results.join('\n');
- pendingAIResultArray=[allText];
  var events=[];
  results.forEach(function(text){
   try{
-   var cleaned=text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-   // Strip any text before [ and after ]
-   var start=cleaned.indexOf('[');var end=cleaned.lastIndexOf(']');
+   var start=text.indexOf('[');var end=text.lastIndexOf(']');
    if(start>=0&&end>start){
-    var json=JSON.parse(cleaned.slice(start,end+1));
+    var json=JSON.parse(text.slice(start,end+1));
     if(Array.isArray(json)){json.forEach(function(ev){events.push(ev)})}
    }else{events.push({title:text.slice(0,50),notes:text})}
   }catch(e){events.push({title:text.slice(0,50),notes:text})}
  });
- if(events.length===0)events.push({title:allText.slice(0,50),notes:allText});
- // Switch to manual mode
+ if(events.length===0)events.push({title:'New Event',notes:results.join('\n')});
  if(currentPage!=='add')navTo('add');
  if(!isManualMode)toggleAddMode();
  clearManual();
- // Create cards for each event
  events.forEach(function(c){
   addEventCard();
- });
- // Now fill all cards (wait for DOM update)
- var allCards=document.querySelectorAll('#manual-cards article');
- events.forEach(function(c,idx){
-  var lastCard=allCards[idx];
+  var allCards=document.querySelectorAll('#manual-cards article');
+  var lastCard=allCards[allCards.length-1];
   if(lastCard){
-   var f=function(name,val){if(val){var el=lastCard.querySelector('[data-field="'+name+'"]');if(el)el.value=val}};
-   f('title',c.title);
-   f('location',c.location);
-   f('link',c.link);
-   f('notes',c.notes);
-   // Date: extract YYYY-MM-DD only
-   if(c.date){var dMatch=String(c.date).match(/\d{4}-\d{2}-\d{2}/);if(dMatch)f('date',dMatch[0])}
-   // Time: extract HH:MM only (strip annotations like "(推测)")
-   if(c.time){var tMatches=String(c.time).match(/\d{1,2}:\d{2}/g);if(tMatches&&tMatches.length>=1)f('time-start',tMatches[0]);if(tMatches&&tMatches.length>=2)f('time-end',tMatches[1])}
-   // Priority: case-insensitive fuzzy match
-   var prio=String(c.priority||'high').toLowerCase();
-   var pBtns=lastCard.querySelectorAll('.priority-group button');
-   var pIdx=2;if(prio.indexOf('low')!==-1)pIdx=0;else if(prio.indexOf('med')!==-1)pIdx=1;
-   if(pBtns[pIdx])pBtns[pIdx].click();
+   var setVal=function(field,val){if(val){var el=lastCard.querySelector('[data-field="'+field+'"]');if(el)el.value=val}};
+   setVal('title',c.title);setVal('location',c.location);setVal('link',c.link);setVal('notes',c.notes||'');
+   if(c.date){var dMatch=String(c.date).match(/\d{4}-\d{2}-\d{2}/);if(dMatch)setVal('date',dMatch[0])}
+   if(c.time){var tMatches=String(c.time).match(/\d{1,2}:\d{2}/g);if(tMatches&&tMatches.length>=1)setVal('time-start',tMatches[0]);if(tMatches&&tMatches.length>=2)setVal('time-end',tMatches[1])}
+   var prio=String(c.priority||'high').toLowerCase();var pBtns=lastCard.querySelectorAll('.priority-group button');var pIdx=2;if(prio.indexOf('low')!==-1)pIdx=0;else if(prio.indexOf('med')!==-1)pIdx=1;if(pBtns[pIdx])pBtns[pIdx].click();
   }
  });
  updateManualCount();
- document.getElementById('manual-mode').scrollIntoView({behavior:'smooth'});
+ document.getElementById('result-panel').classList.add('hidden');
 }
 // Old showParsedEvents stub (replaced above)
-
 // ── Manual Add Mode ──
 var isManualMode=false,eventCardIdx=0;
 function toggleAddMode(){
