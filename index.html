@@ -266,7 +266,7 @@ function openDatePicker(mode){
   var ds=toLocalISOString(anchorDate);
   box.innerHTML='<div class="text-center mb-md"><span class="font-h3 text-h3 text-on-surface">Select Date</span></div><input id="jp-input" type="date" class="w-full bg-surface-container-low border border-outline-variant focus:border-primary rounded-lg px-3 py-3 font-body-md text-body-md text-on-surface outline-none mb-md" value="'+ds+'"><div class="flex gap-sm"><button id="jp-cancel" class="flex-1 py-3 rounded-lg bg-surface-container-high text-on-surface font-label-md">Cancel</button><button id="jp-confirm" class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-label-md">Go</button></div>';
  } else if(mode==='month'){
-  var ym=anchorDate.toISOString().slice(0,7);
+  var ym=toLocalISOString(anchorDate).slice(0,7);
   box.innerHTML='<div class="text-center mb-md"><span class="font-h3 text-h3 text-on-surface">Select Month</span></div><input id="jp-input" type="month" class="w-full bg-surface-container-low border border-outline-variant focus:border-primary rounded-lg px-3 py-3 font-body-md text-body-md text-on-surface outline-none mb-md" value="'+ym+'"><div class="flex gap-sm"><button id="jp-cancel" class="flex-1 py-3 rounded-lg bg-surface-container-high text-on-surface font-label-md">Cancel</button><button id="jp-confirm" class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-label-md">Go</button></div>';
  } else {
   var currentY=anchorDate.getFullYear();
@@ -434,7 +434,7 @@ function shiftYear(dir){anchorDate.setFullYear(anchorDate.getFullYear()+dir);ren
 
 function applyView(){
  var idx=views.indexOf(currentView);
- var isToday=(anchorDate.toISOString().slice(0,10)===todayStr);
+ var isToday=(toLocalISOString(anchorDate)===todayStr);
  var showHeader=(idx===0);
  document.getElementById('btn-back').classList.toggle('hidden',idx===0);
  // drill-icon removed
