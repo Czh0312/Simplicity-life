@@ -199,16 +199,17 @@ body{min-height:max(884px,100dvh)}
 </div>
 
 <!-- ===== EDIT MODAL ===== -->
-<div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-white/90 backdrop-blur-md" onclick="if(event.target===this)closeEdit()">
- <div class="bg-surface-container-lowest w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl md:rounded-2xl p-lg shadow-xl" onclick="event.stopPropagation()">
-  <div class="flex items-center justify-between mb-lg">
-   <button onclick="closeEdit()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined">close</span></button>
-   <div class="flex items-center gap-sm">
-    <button onclick="toggleComplete()" id="btn-complete" class="py-2 px-4 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span> Complete</button>
-    <button onclick="deleteEvent()" class="py-2 px-4 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.delete">Delete</button>
-    <button onclick="saveEdit()" class="py-2 px-4 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.save">Save</button>
+<div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm" onclick="if(event.target===this)closeEdit()">
+ <div class="bg-surface-container-lowest w-full max-w-lg max-h-[90vh] rounded-t-2xl md:rounded-2xl shadow-xl flex flex-col" onclick="event.stopPropagation()">
+  <div class="flex items-center justify-between p-lg border-b border-outline-variant/20 shrink-0">
+   <button onclick="closeEdit()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">close</span></button>
+   <div class="flex items-center gap-2">
+    <button onclick="toggleComplete()" id="btn-complete" class="py-1.5 px-3 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span> Complete</button>
+    <button onclick="deleteEvent()" class="py-1.5 px-3 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.delete">Delete</button>
+    <button onclick="saveEdit()" class="py-1.5 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.save">Save</button>
    </div>
   </div>
+  <div class="flex flex-col gap-md p-lg overflow-y-auto pb-safe">
   <input type="hidden" id="edit-id"/>
   <div class="flex flex-col gap-md">
    <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.event_title">Event Title</label><input id="edit-title" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface outline-none transition-colors" type="text"/></div>
@@ -569,22 +570,32 @@ function openEdit(id){
  editItemId=id;var item=null;for(var _i=0;_i<allItems.length;_i++){if(Number(allItems[_i].id)===Number(id)){item=allItems[_i];break}}if(!item)return;
  document.getElementById('edit-id').value=id;
  document.getElementById('edit-title').value=item.content||'';
- document.getElementById('edit-date').value=(item.created_at||'').slice(0,10);
- var timeMatch=(item.ai_summary||'').match(/Time:\s*(.+)/);var timeVal=timeMatch?timeMatch[1]:'';var parts=timeVal.split('-');document.getElementById('edit-time-start').value=(parts[0]||'').trim();document.getElementById('edit-time-end').value=(parts[1]||'').trim();
- document.getElementById('edit-location').value='';
- document.getElementById('edit-link').value='';
- var rawSummary=item.ai_summary||'';var cleanNotes=rawSummary.replace(/\[(HIGH|MED|LOW|高|中|低)\]\n?/gi,'').replace(/Date:.*?(?:\n|$)/gi,'').replace(/Time:.*?(?:\n|$)/gi,'').replace(/Location:.*?(?:\n|$)/gi,'').replace(/Link:.*?(?:\n|$)/gi,'').replace(/Reminder:.*?(?:\n|$)/gi,'').replace(/Recurring:.*?(?:\n|$)/gi,'').replace(/Notes:\s*/gi,'').trim();document.getElementById('edit-notes').value=cleanNotes;
+ var createdDate=(item.created_at||'').slice(0,10);
+ document.getElementById('edit-date').value=createdDate;
+ var rawSummary=item.ai_summary||'';
+ var timeMatch=rawSummary.match(/Time:\s*(.+)/);var timeVal=timeMatch?timeMatch[1]:'';var parts=timeVal.split('-');
+ document.getElementById('edit-time-start').value=(parts[0]||'').trim();
+ document.getElementById('edit-time-end').value=(parts[1]||'').trim();
+ var locMatch=rawSummary.match(/Location:\s*(.+)/i);
+ document.getElementById('edit-location').value=locMatch?locMatch[1].trim():'';
+ var linkMatch=rawSummary.match(/Link:\s*(.+)/i);
+ document.getElementById('edit-link').value=linkMatch?linkMatch[1].trim():'';
+ var cleanNotes=rawSummary.replace(/\[(HIGH|MED|LOW|高|中|低)\]\n?/gi,'').replace(/Date:.*?(?:\n|$)/gi,'').replace(/Time:.*?(?:\n|$)/gi,'').replace(/Location:.*?(?:\n|$)/gi,'').replace(/Link:.*?(?:\n|$)/gi,'').replace(/Reminder:.*?(?:\n|$)/gi,'').replace(/Recurring:.*?(?:\n|$)/gi,'').replace(/Notes:\s*/gi,'').trim();
+ document.getElementById('edit-notes').value=cleanNotes;
+ // Populate reminder fields
+ var remMatch=rawSummary.match(/Reminder:\s*(.+)/i);
+ var recMatch=rawSummary.match(/Recurring:\s*(.+)/i);
+ if(recMatch){setReminderType('recurring');document.getElementById('edit-recur-start').value=createdDate;document.getElementById('edit-recur-end').value=createdDate;document.getElementById('edit-recur-time').value='09:00'}
+ else{setReminderType('once');var rd=createdDate,rt='09:00';if(remMatch){var m=remMatch[1].split(' at ');if(m[0])rd=m[0].trim();if(m[1])rt=m[1].trim()}document.getElementById('edit-reminder-date').value=rd;document.getElementById('edit-reminder-time').value=rt}
  document.getElementById('edit-modal').classList.remove('hidden');
- var _tags=item.ai_tags||'',_s=item.ai_summary||'',_ep='high';
- if(_tags.indexOf('low')!==-1)_ep='low';
- else if(_tags.indexOf('med')!==-1)_ep='med';
- else if(_s.indexOf('[LOW]')!==-1||_s.indexOf('[低]')!==-1)_ep='low';
- else if(_s.indexOf('[MED]')!==-1||_s.indexOf('[中]')!==-1)_ep='med';
- editPriority=_ep;setEditPriorityBtn(_ep);setReminderType('once');
- var done=(item.ai_tags||'').indexOf('completed')!==-1;
+ var _tags=item.ai_tags||'',_ep='low';
+ if(_tags.indexOf('high')!==-1||rawSummary.indexOf('[HIGH]')!==-1||rawSummary.indexOf('[高]')!==-1)_ep='high';
+ else if(_tags.indexOf('med')!==-1||rawSummary.indexOf('[MED]')!==-1||rawSummary.indexOf('[中]')!==-1)_ep='med';
+ editPriority=_ep;setEditPriorityBtn(_ep);
+ var done=_tags.indexOf('completed')!==-1;
  var btn=document.getElementById('btn-complete');
  btn.innerHTML=done?'<span class="material-symbols-outlined text-[16px]">close</span> Uncomplete':'<span class="material-symbols-outlined text-[16px]">check</span> Complete';
- btn.className=done?'py-2 px-4 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1':'py-2 px-4 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1';
+ btn.className=done?'py-1.5 px-3 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1':'py-1.5 px-3 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1';
 }
 function closeEdit(){document.getElementById('edit-modal').classList.add('hidden')}
 function setReminderType(type){
