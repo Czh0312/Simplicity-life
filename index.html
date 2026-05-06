@@ -905,7 +905,7 @@ function setCardReminder(id,type,btn){
  card.querySelector('.rem-once').classList.toggle('hidden',type!=='once');card.querySelector('.rem-recurring').classList.toggle('hidden',type!=='recurring')
 }
 function setCardPriority(btn,p){btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('bg-surface-container-lowest','shadow-sm','text-primary');b.classList.add('text-on-surface-variant')});btn.classList.add('bg-surface-container-lowest','shadow-sm','text-primary');btn.classList.remove('text-on-surface-variant')}
-function updateManualCount(){var count=document.querySelectorAll('#manual-cards article').length;document.getElementById('manual-count').textContent=count;document.getElementById('manual-actions').style.display=count>0?'block':'none'}
+function updateManualCount(){var count=document.querySelectorAll('#manual-cards article').length;var btn=document.querySelector('#manual-actions button');if(btn)btn.innerHTML=(currentLang==='zh'?'确认并添加 ':'Confirm ')+'<span id=\"manual-count\">'+count+'</span>'+(currentLang==='zh'?' 个日程':' &amp; Add to Schedule');document.getElementById('manual-actions').style.display=count>0?'block':'none'}
 function clearManual(){document.getElementById('manual-cards').innerHTML='';eventCardIdx=0;updateManualCount()}
 function confirmManual(){
  var cards=document.querySelectorAll('#manual-cards article'),count=0;
