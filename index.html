@@ -798,9 +798,15 @@ function sendVoice(blob){
 }
 function uploadImages(input){
  var files=input.files;if(!files.length)return;
- showResult(currentLang==='zh'?'正在压缩并分析图片 (共 '+files.length+' 张)...':'Compressing & analyzing '+files.length+' image(s)...');
- var results=[];var done=0;
- Array.from(files).forEach(function(file){
+ var results=[];var currentIndex=0;
+ function processNext(){
+  if(currentIndex>=files.length){
+   pendingAIResultArray=results;
+   showResult(results.join('\n\n---\n\n'));
+   return;
+  }
+  var file=files[currentIndex];
+  showResult((currentLang==='zh'?'正在分析第 ':'Processing ')+(currentIndex+1)+'/'+files.length+(currentLang==='zh'?' 张图片...':' image(s)...'));
   var reader=new FileReader();
   reader.onload=function(e){
    var img=new Image();
@@ -813,14 +819,14 @@ function uploadImages(input){
     var compressedBase64=canvas.toDataURL('image/jpeg',0.6);
     var cont=[{image_url:{url:compressedBase64}},{text:'请提取图片中的日程信息，以 JSON 数组格式输出。'}];
     callAI(getSystemPrompt('image'),cont,function(text){
-     results.push(text);done++;
-     if(done===files.length){pendingAIResultArray=results;showResult(results.join('\n\n---\n\n'))}
+     results.push(text);currentIndex++;processNext();
     },true);
    };
    img.src=e.target.result;
   };
   reader.readAsDataURL(file);
- });
+ }
+ processNext();
  input.value='';
 }
 
