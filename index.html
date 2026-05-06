@@ -898,7 +898,7 @@ function confirmManual(){
   if(notes)summary+='\nNotes: '+notes;
   var mtags=[];if(priority==='high')mtags.push('high');else if(priority==='med')mtags.push('med');else mtags.push('low');addItem({type:'text',content:title,ai_summary:summary,ai_tags:mtags.join(','),created_at:date?date+'T'+(_ts||'00:00:00'):new Date().toISOString()});count++
  });
- if(count>0){alert(count+' event(s) added! View them on the Home page.');clearManual();toggleAddMode()}
+ if(count>0){var msg=currentLang==='zh'?'成功添加 '+count+' 个日程':count+' event(s) added';alert(msg);clearManual();toggleAddMode()}
 }
 
 // ── Profile: Export / Import ──
