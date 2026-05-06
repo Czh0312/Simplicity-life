@@ -780,7 +780,7 @@ function startVoice(){
   recognition.onstart=function(){updateVoiceUI(true)};
   recognition.onend=function(){updateVoiceUI(false)};
   recognition.onerror=function(e){updateVoiceUI(false);if(e.error==='not-allowed')alert(currentLang==='zh'?'请在设置中开启麦克风权限':'Please enable microphone in settings')};
-  recognition.onresult=function(e){var text=e.results[0][0].transcript;if(text){showResult(text);callAI(getSystemPrompt('text'),text,function(result){pendingAIResultArray=[result];showResult(result)})}}
+  recognition.onresult=function(e){var text=e.results[0][0].transcript;if(text){showResult(text);callAI(getSystemPrompt('text'),text,function(result){showParsedEvents([result])})}}
  }
  try{recognition.start()}catch(e){recognition.stop();recognition.start()}
 }
@@ -830,13 +830,13 @@ function uploadImages(input){
 function uploadImage(input){uploadImages(input);}function pasteLink(){
  var url=prompt(t('add.paste_link'));
  if(!url)return;
- showResult(t('add.analyzing_link'));
- callAI(getSystemPrompt('link'),url,function(text){pendingAIResultArray=[text];showResult(text)})
+ showResult(currentLang==='zh'?'正在解析链接...':'Analyzing link...');
+ callAI(getSystemPrompt('link'),url,function(text){showParsedEvents([text])})
 }
 function sendText(){
  var text=document.getElementById('text-input').value.trim();if(!text)return;
- showResult(t('add.thinking'));document.getElementById('text-input').value='';
- callAI(getSystemPrompt('text'),text,function(result){pendingAIResultArray=[result];showResult(result)})
+ showResult(currentLang==='zh'?'正在解析...':'Parsing...');document.getElementById('text-input').value='';
+ callAI(getSystemPrompt('text'),text,function(result){showParsedEvents([result])})
 }
 function showResult(text){var panel=document.getElementById('result-panel'),c=document.getElementById('result-content');panel.classList.remove('hidden');c.innerHTML='<div class="whitespace-pre-wrap mb-md">'+esc(text)+'</div><button onclick="reviewAIResult()" class="w-full py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md">Review & Confirm</button>';panel.scrollIntoView({behavior:'smooth',block:'center'})}
 
