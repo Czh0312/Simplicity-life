@@ -911,6 +911,81 @@ function clearAllData(){if(!confirm(t('profile.clear_confirm')))return;localStor
 // Quick jump date picker
 
 navTo('home');
+
+// ── Reminder Engine ──
+var lastNotifiedMinute='';
+function requestNotificationPermission(){
+ if('Notification' in window&&Notification.permission==='default'){
+  Notification.requestPermission();
+ }
+}
+function playBeep(){
+ try{
+  var ctx=new(window.AudioContext||window.webkitAudioContext)();
+  var osc=ctx.createOscillator();
+  var gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.type='sine';
+  osc.frequency.setValueAtTime(880,ctx.currentTime);
+  gain.gain.setValueAtTime(1,ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1);
+  osc.start(ctx.currentTime);osc.stop(ctx.currentTime+1);
+ }catch(e){}
+}
+function checkReminders(){
+ var now=new Date();
+ var currentYMD=toLocalISOString(now);
+ var currentHHMM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+ var currentMinuteKey=currentYMD+'-'+currentHHMM;
+ if(lastNotifiedMinute===currentMinuteKey)return;
+ var uiDays=['M','T','W','T','F','S','S'];
+ var todayChar=now.getDay()===0?'S':uiDays[now.getDay()-1];
+ var items=getItems();
+ var toNotify=[];
+ items.forEach(function(item){
+  var rawSummary=item.ai_summary||'';
+  var remMatch=rawSummary.match(/Reminder:\s*(.+)/i);
+  var recMatch=rawSummary.match(/Recurring:\s*(.+)/i);
+  var isDone=(item.ai_tags||'').indexOf('completed')!==-1;
+  if(isDone)return;
+  if(recMatch){
+   var recStr=recMatch[1];
+   var datePart=recStr.split(', days: ')[0]||'';
+   var daysPart=recStr.split(', days: ')[1]||'';
+   var mDate=datePart.match(/(.*?)\s+to\s+(.*?)\s+at\s+(.*)/);
+   if(mDate){
+    var startDate=mDate[1].trim(),endDate=mDate[2].trim(),recTime=mDate[3].trim();
+    if(currentYMD>=startDate&&currentYMD<=endDate&&currentHHMM===recTime){
+     var activeDays=daysPart.split(',');
+     if(activeDays.indexOf(todayChar)!==-1)toNotify.push(item.content);
+    }
+   }
+  }else if(remMatch){
+   var m=remMatch[1].split(' at ');
+   if(m.length>=2){
+    var rDate=m[0].trim(),rTime=m[1].trim();
+    if(rDate===currentYMD&&rTime===currentHHMM)toNotify.push(item.content);
+   }
+  }
+ });
+ if(toNotify.length>0){
+  toNotify.forEach(function(title){
+   if('Notification' in window&&Notification.permission==='granted'){
+    new Notification(title,{body:'日程时间已到！'});
+   }else{
+    if(confirm(title+' - 日程时间已到！')){}
+   }
+  });
+  playBeep();
+  lastNotifiedMinute=currentMinuteKey;
+ }
+}
+document.addEventListener('DOMContentLoaded',function(){
+ requestNotificationPermission();
+ setInterval(checkReminders,30000);
+ setTimeout(checkReminders,2000);
+});
+
 </script>
 </body>
 </html>
