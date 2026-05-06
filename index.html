@@ -768,41 +768,37 @@ document.addEventListener('DOMContentLoaded',function(){
 
 // ── AI Functions ──
 var mediaRecorder=null,audioChunks=[],isRecording=false;
+var recognition=null;
 function startVoice(){
- if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Your browser does not support speech recognition. Use Chrome or Safari.');return}
- var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- var recognition=new SR();
- recognition.lang=currentLang==='zh'?'zh-CN':'en-US';
- recognition.continuous=false;
- updateVoiceUI(true);
- recognition.onresult=function(e){var text=e.results[0][0].transcript;showResult(text);callAI(getSystemPrompt('text'),text,function(result){pendingAIResult=result;showResult(result)})};
- recognition.onerror=function(){updateVoiceUI(false)};
- recognition.onend=function(){updateVoiceUI(false)};
- recognition.start();
+ var SC=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SC){alert(currentLang==='zh'?'您的浏览器不支持语音识别':'Speech recognition not supported');return}
+ if(!recognition){recognition=new SC();recognition.lang=currentLang==='zh'?'zh-CN':'en-US';recognition.continuous=false;recognition.interimResults=false;
+  recognition.onstart=function(){updateVoiceUI(true)};
+  recognition.onend=function(){updateVoiceUI(false)};
+  recognition.onerror=function(e){updateVoiceUI(false);if(e.error==='not-allowed')alert(currentLang==='zh'?'请在设置中开启麦克风权限':'Please enable microphone in settings')};
+  recognition.onresult=function(e){var text=e.results[0][0].transcript;if(text){showResult(text);callAI(getSystemPrompt('text'),text,function(result){pendingAIResult=result;showResult(result)})}}
+ }
+ try{recognition.start()}catch(e){recognition.stop();recognition.start()}
 }
-function stopRecording(){}
+function stopRecording(){if(recognition)recognition.stop()}
 function updateVoiceUI(rec){
  var icon=document.getElementById('voice-icon'),label=document.getElementById('voice-label'),status=document.getElementById('voice-status'),btn=document.getElementById('btn-voice');
- if(rec){icon.textContent='mic';label.textContent=currentLang==='zh'?'正在听...':'Listening...';status.textContent=currentLang==='zh'?'请说话':'Speak now';btn.classList.add('animate-pulse');btn.style.background='#ba1a1a'}
+ if(rec){icon.textContent='graphic_eq';label.textContent=currentLang==='zh'?'正在倾听...':'Listening...';status.textContent=currentLang==='zh'?'请说话...':'Speak now...';btn.classList.add('animate-pulse');btn.style.background='#ba1a1a'}
  else{icon.textContent='mic';label.textContent=t('add.voice_note');status.textContent=t('add.voice_speak');btn.classList.remove('animate-pulse');btn.style.background=''}
 }
-function sendVoice(blob){}
-function sendVoice(blob){
+function sendVoice(blob){}function sendVoice(blob){
  showResult('Voice note saved. DeepSeek does not support audio input yet. The recording has been saved as a note.');
  addItem({type:'voice',content:'Voice Note ('+new Date().toLocaleTimeString()+')',ai_summary:'Voice recording saved. Open to add details manually.'})
 }
 function uploadImages(input){
  var files=input.files;if(!files.length)return;
- showResult('Processing '+files.length+' image(s)...');
+ showResult(currentLang==='zh'?'正在分析图片...':'Analyzing images...');
  var results=[];var done=0;
  Array.from(files).forEach(function(file){
   var reader=new FileReader();
   reader.onload=function(){
-   var prompt=getSystemPrompt('image');
-   callAI(prompt,[{image_url:{url:reader.result}},{text:'请提取图片中的日程信息'}],function(text){
-    results.push(text);done++;
-    if(done===files.length){showParsedEvents(results)}
-   },true);
+   var content=[{image_url:{url:reader.result}},{text:'请精准提取这张图片中的所有日程信息，包含标题、日期、具体时间、地点、链接和备注。'}];
+   callAI(getSystemPrompt('image'),content,function(text){results.push(text);done++;if(done===files.length){showParsedEvents(results)}},true);
   };
   reader.readAsDataURL(file);
  });
