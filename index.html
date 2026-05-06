@@ -518,18 +518,20 @@ function renderDay(){
 function getWeekStart(){var d=new Date(anchorDate);d.setDate(d.getDate()-d.getDay());return d}
 function renderWeek(){
  var start=getWeekStart(),end=new Date(start);end.setDate(start.getDate()+6);
- // Centered date range header inside week view
  var rangeText; if(currentLang==='zh'){ rangeText=start.getFullYear()+'年'+(start.getMonth()+1)+'月'+start.getDate()+'日-'+(end.getMonth()+1)+'月'+end.getDate()+'日'; } else { rangeText=start.toLocaleDateString(loc(),{month:'short',day:'numeric'})+' - '+end.toLocaleDateString(loc(),{month:'short',day:'numeric',year:'numeric'}); }
  document.getElementById('week-label').textContent=rangeText;
  var html='';
- for(var i=0;i<7;i++){
-  var d=new Date(start);d.setDate(start.getDate()+i);var ds=toLocalISOString(d),isToday=ds===todayStr;
-  var dayItems=allItems.filter(function(it){return it.created_at&&it.created_at.indexOf(ds)===0});
-  var hasEvents=dayItems.length>0;
-  // Today=dark blue bg-primary, events=light blue bg-primary-fixed/30, no events=surface bg
-  var bgClass=isToday?'bg-primary text-on-primary shadow-[0_8px_24px_rgba(35,70,213,0.2)] border-transparent':(hasEvents?'bg-primary-fixed/30 border-primary/20':'border-outline-variant/30 bg-surface-container-low/50');
-  html+='<div class="min-h-[100px] flex flex-col p-2 rounded-xl border '+bgClass+' cursor-pointer hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden" onclick="goToDay(new Date(\''+ds+'T00:00:00\'))">'+(isToday?'<div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>':'')+'<span class="font-body-lg text-body-lg font-bold text-center relative z-10">'+d.getDate()+'</span><span class="font-label-sm text-label-sm text-center relative z-10 opacity-70">'+d.toLocaleDateString('en-US',{weekday:'short'})+'</span><div class="mt-1 flex-1 flex flex-col gap-0.5 overflow-hidden relative z-10">'+dayItems.slice(0,3).map(function(item){var done=(item.ai_tags||'').indexOf('completed')!==-1;return '<div class="text-[9px] leading-tight px-1.5 py-0.5 rounded '+(isToday?'bg-white/20 text-white/90':(done?'bg-green-100 text-green-800':'bg-primary/10 text-primary'))+' truncate">'+(done?'✓ ':'')+esc((item.content||'event').slice(0,15))+'</div>'}).join('')+'</div>'+(dayItems.length>3?'<div class="text-[9px] '+(isToday?'text-white/60':'text-primary')+' relative z-10 mt-0.5">+'+ (dayItems.length-3) +' more</div>':'')+'</div>';
- }
+ // Day header row
+ html+='<div class="flex justify-around mb-2 px-1">';
+ for(var i=0;i<7;i++){var d=new Date(start);d.setDate(start.getDate()+i);var isToday=toLocalISOString(d)===todayStr;html+='<div class="flex flex-col items-center cursor-pointer" onclick="goToDay(new Date(\''+toLocalISOString(d)+'T00:00:00\'))"><span class="text-[10px] font-semibold uppercase '+(isToday?'text-primary':'text-on-surface-variant')+'">'+d.toLocaleDateString('en-US',{weekday:'short'})+'</span><span class="text-lg font-bold '+(isToday?'text-primary':'text-on-surface')+'">'+d.getDate()+'</span></div>'}
+ html+='</div>';
+ // Time-block grid: 7 columns, 420px height
+ html+='<div class="grid grid-cols-7 gap-1 relative h-[420px] bg-surface-container-lowest rounded-xl p-1 border border-outline-variant/20">';
+ // Hour guide lines
+ for(var h=0;h<23;h++){var pct=(h/24)*100;html+='<div class="absolute left-0 right-0 border-t border-on-surface/10 pointer-events-none z-0" style="top:'+pct+'%"></div>'}
+ // Each day column
+ for(var i=0;i<7;i++){var d=new Date(start);d.setDate(start.getDate()+i);var ds=toLocalISOString(d),isToday=ds===todayStr;var dayItems=allItems.filter(function(it){return it.created_at&&it.created_at.indexOf(ds)===0});var colBg=isToday?'bg-primary-fixed/30':'bg-surface-container-lowest';html+='<div class="relative h-full rounded-md '+colBg+' cursor-pointer z-10" onclick="goToDay(new Date(\''+ds+'T00:00:00\'))">';dayItems.forEach(function(item){var tags=item.ai_tags||'',summary=item.ai_summary||'';var priority='low';if(tags.indexOf('high')!==-1||summary.indexOf('[HIGH]')!==-1)priority='high';else if(tags.indexOf('med')!==-1||summary.indexOf('[MED]')!==-1)priority='med';var isDone=tags.indexOf('completed')!==-1;var bgColor=isDone?'#9ca3af':(priority==='high'?'#ef4444':(priority==='med'?'#eab308':'#4361ee'));var timeMatch=summary.match(/Time:\s*(.+)/);var timeStr=timeMatch?timeMatch[1]:'';var startHr=9,durationHr=1.5;if(timeStr){var parts=timeStr.replace(/[\(（]推测[\)）]/g,'').split('-');var parseHr=function(ts){if(!ts)return null;var m=String(ts).match(/(\d{1,2}):(\d{2})/);if(m)return parseInt(m[1])+parseInt(m[2])/60;return null};var s=parseHr(parts[0]);if(s!==null){startHr=s;durationHr=1}if(parts[1]){var e=parseHr(parts[1]);if(e!==null&&e>s)durationHr=e-s}}startHr=Math.max(0,Math.min(23,startHr));if(startHr+durationHr>24)durationHr=24-startHr;var topPct=(startHr/24)*100;var heightPct=Math.max(3,(durationHr/24)*100);html+='<div class="absolute left-0.5 right-0.5 rounded-sm shadow-sm border border-white/20" style="top:'+topPct+'%;height:'+heightPct+'%;background-color:'+bgColor+'" title="'+esc(item.content||'event')+'"></div>'});html+='</div>'}
+ html+='</div>';
  document.getElementById('week-grid').innerHTML=html;
 }
 
