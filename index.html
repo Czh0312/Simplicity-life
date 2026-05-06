@@ -199,19 +199,19 @@ body{min-height:max(884px,100dvh)}
 </div>
 
 <!-- ===== EDIT MODAL ===== -->
-<div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm" onclick="if(event.target===this)closeEdit()">
- <div class="bg-surface-container-lowest w-full max-w-lg max-h-[90vh] rounded-t-2xl md:rounded-2xl shadow-xl flex flex-col" onclick="event.stopPropagation()">
-  <div class="flex items-center justify-between p-lg border-b border-outline-variant/20 shrink-0">
-   <button onclick="closeEdit()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">close</span></button>
+<div id="edit-modal" class="hidden fixed inset-0 z-[200] flex flex-col bg-surface" onclick="if(event.target===this)closeEdit()">
+  <!-- Fixed header with action buttons -->
+  <div class="flex items-center justify-between p-lg border-b border-outline-variant/20 shrink-0 bg-surface z-10">
+   <button onclick="closeEdit()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high text-on-surface-variant -ml-2"><span class="material-symbols-outlined text-[24px]">close</span></button>
    <div class="flex items-center gap-2">
     <button onclick="toggleComplete()" id="btn-complete" class="py-1.5 px-3 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span> Complete</button>
     <button onclick="deleteEvent()" class="py-1.5 px-3 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.delete">Delete</button>
     <button onclick="saveEdit()" class="py-1.5 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-80 transition-opacity" data-i18n="edit.save">Save</button>
    </div>
   </div>
-  <div class="flex flex-col gap-md p-lg overflow-y-auto pb-safe">
-  <input type="hidden" id="edit-id"/>
-  <div class="flex flex-col gap-md">
+  <!-- Scrollable body -->
+  <div class="flex flex-col gap-md p-lg overflow-y-auto pb-32 flex-1">
+   <input type="hidden" id="edit-id"/>
    <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.event_title">Event Title</label><input id="edit-title" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface outline-none transition-colors" type="text"/></div>
    <div class="flex gap-sm"><div class="flex-1"><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.date">Date</label><input id="edit-date" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="date"/></div><div class="flex-1"><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.time">Time</label><div class="flex items-center gap-1"><input id="edit-time-start" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-2 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="time"/><span class="text-on-surface-variant">-</span><input id="edit-time-end" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-2 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="time"/></div></div></div>
    <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.location">Location</label><div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">location_on</span><input id="edit-location" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg pl-9 pr-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors" type="text" data-i18n-placeholder="edit.add_location"/></div></div>
@@ -235,11 +235,10 @@ body{min-height:max(884px,100dvh)}
    <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.priority">Priority</label><div class="flex bg-surface-container-low rounded-lg p-1" id="edit-priority-group"><button onclick="setEditPriority(this,'low')" data-p="low" class="flex-1 font-label-md text-label-md py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container" data-i18n="edit.low">Low</button><button onclick="setEditPriority(this,'med')" data-p="med" class="flex-1 font-label-md text-label-md py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container" data-i18n="edit.med">Med</button><button onclick="setEditPriority(this,'high')" data-p="high" class="flex-1 font-label-md text-label-md py-1.5 rounded-md bg-surface-container-lowest shadow-sm text-primary" data-i18n="edit.high">High</button></div></div>
    <div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" data-i18n="edit.notes">Notes</label><textarea id="edit-notes" class="w-full bg-surface-container-low border border-transparent focus:border-primary rounded-lg px-3 py-2 font-body-sm text-body-sm text-on-surface outline-none transition-colors resize-none" rows="3" data-i18n-placeholder="edit.notes_placeholder"></textarea></div>
   </div>
- </div>
 </div>
 
 <!-- ===== BOTTOM NAV ===== -->
-<nav class="fixed bottom-0 left-0 right-0 flex justify-around items-center h-20 pb-safe px-4 w-full z-50 bg-white/90 backdrop-blur-lg border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] text-[11px] font-medium tracking-wide uppercase">
+<nav class="fixed bottom-0 left-0 right-0 flex justify-around items-center min-h-[80px] py-2 pb-safe px-4 w-full z-50 bg-white/90 backdrop-blur-lg border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] text-[11px] font-medium tracking-wide uppercase">
  <button onclick="navTo('home')" id="nav-home" class="flex flex-col items-center justify-center hover:text-primary active:scale-90 transition-all duration-200 w-16 gap-1 no-underline text-slate-400">
   <span class="material-symbols-outlined" id="nav-home-icon">calendar_today</span><span data-i18n="nav.home">Home</span></button>
  <button onclick="navTo('add')" id="nav-add" class="flex flex-col items-center justify-center hover:text-primary active:scale-90 transition-all duration-200 w-16 gap-1 no-underline text-slate-400">
@@ -579,11 +578,27 @@ function openEdit(id){
  document.getElementById('edit-link').value=linkMatch?linkMatch[1].trim():'';
  var cleanNotes=rawSummary.replace(/\[(HIGH|MED|LOW|高|中|低)\]\n?/gi,'').replace(/Date:.*?(?:\n|$)/gi,'').replace(/Time:.*?(?:\n|$)/gi,'').replace(/Location:.*?(?:\n|$)/gi,'').replace(/Link:.*?(?:\n|$)/gi,'').replace(/Reminder:.*?(?:\n|$)/gi,'').replace(/Recurring:.*?(?:\n|$)/gi,'').replace(/Notes:\s*/gi,'').trim();
  document.getElementById('edit-notes').value=cleanNotes;
- // Populate reminder fields
+ // Load reminder data
  var remMatch=rawSummary.match(/Reminder:\s*(.+)/i);
  var recMatch=rawSummary.match(/Recurring:\s*(.+)/i);
- if(recMatch){setReminderType('recurring');document.getElementById('edit-recur-start').value=createdDate;document.getElementById('edit-recur-end').value=createdDate;document.getElementById('edit-recur-time').value='09:00'}
- else{setReminderType('once');var rd=createdDate,rt='09:00';if(remMatch){var m=remMatch[1].split(' at ');if(m[0])rd=m[0].trim();if(m[1])rt=m[1].trim()}document.getElementById('edit-reminder-date').value=rd;document.getElementById('edit-reminder-time').value=rt}
+ var allDayBtns=document.getElementById('edit-day-buttons').querySelectorAll('button');
+ allDayBtns.forEach(function(b){b.className='day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold text-on-surface-variant hover:bg-surface-container'});
+ if(recMatch){
+  setReminderType('recurring');
+  var recStr=recMatch[1];
+  var datePart=recStr.split(', days: ')[0]||'';
+  var daysPart=recStr.split(', days: ')[1]||'';
+  var mDate=datePart.match(/(.*?)\s+to\s+(.*?)\s+at\s+(.*)/);
+  if(mDate){document.getElementById('edit-recur-start').value=mDate[1].trim();document.getElementById('edit-recur-end').value=mDate[2].trim();document.getElementById('edit-recur-time').value=mDate[3].trim()}
+  else{document.getElementById('edit-recur-start').value=createdDate;document.getElementById('edit-recur-end').value=createdDate;document.getElementById('edit-recur-time').value='09:00'}
+  var activeDays=daysPart.split(',');
+  allDayBtns.forEach(function(b){if(activeDays.indexOf(b.textContent)!==-1){b.className='day-btn w-8 h-8 rounded-full border border-outline-variant text-[10px] flex items-center justify-center font-bold bg-primary text-on-primary hover:bg-surface-container'}})
+ }else{
+  setReminderType('once');
+  var rd=createdDate,rt='09:00';
+  if(remMatch){var m=remMatch[1].split(' at ');if(m[0])rd=m[0].trim();if(m[1])rt=m[1].trim()}
+  document.getElementById('edit-reminder-date').value=rd;document.getElementById('edit-reminder-time').value=rt;
+ }
  document.getElementById('edit-modal').classList.remove('hidden');
  var _tags=item.ai_tags||'',_ep='low';
  if(_tags.indexOf('high')!==-1||rawSummary.indexOf('[HIGH]')!==-1||rawSummary.indexOf('[高]')!==-1)_ep='high';
@@ -621,7 +636,6 @@ function saveEdit(){
  var location=document.getElementById('edit-location').value.trim();
  var link=document.getElementById('edit-link').value.trim();
  var notes=document.getElementById('edit-notes').value.trim();
- // Priority from global variable (set by button click or openEdit)
  var priority=editPriority;
  if(!priority)priority='high';
  var summary='['+priority.toUpperCase()+']';
@@ -629,8 +643,20 @@ function saveEdit(){
  if(time)summary+='\nTime: '+time;
  if(location)summary+='\nLocation: '+location;
  if(link)summary+='\nLink: '+link;
+ // Save reminder data
+ if(editReminderType==='recurring'){
+  var rs=document.getElementById('edit-recur-start').value||'';
+  var re=document.getElementById('edit-recur-end').value||'';
+  var rt=document.getElementById('edit-recur-time').value||'';
+  var dayBtns=document.getElementById('edit-day-buttons').querySelectorAll('button.bg-primary');
+  var days=Array.from(dayBtns).map(function(b){return b.textContent}).join(',');
+  summary+='\nRecurring: '+rs+' to '+re+' at '+rt+', days: '+(days||'none');
+ }else{
+  var rd=document.getElementById('edit-reminder-date').value||'';
+  var rtm=document.getElementById('edit-reminder-time').value||'';
+  if(rd)summary+='\nReminder: '+rd+' at '+rtm;
+ }
  if(notes)summary+='\nNotes: '+notes;
- // Find and update the item in allItems
  for(var i=0;i<allItems.length;i++){
   if(allItems[i].id===id){
    allItems[i].content=title||'Event';
