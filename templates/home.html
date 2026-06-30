@@ -38,9 +38,7 @@
     <!-- MONTH VIEW -->
     <div id="view-month" class="hidden">
         <div class="bg-surface-container-lowest rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-outline-variant/20 p-4">
-            <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                <div class="font-label-sm text-label-sm text-secondary uppercase">S</div><div class="font-label-sm text-label-sm text-secondary uppercase">M</div><div class="font-label-sm text-label-sm text-secondary uppercase">T</div><div class="font-label-sm text-label-sm text-secondary uppercase">W</div><div class="font-label-sm text-label-sm text-secondary uppercase">T</div><div class="font-label-sm text-label-sm text-secondary uppercase">F</div><div class="font-label-sm text-label-sm text-secondary uppercase">S</div>
-            </div>
+            <div class="grid grid-cols-7 gap-1 text-center mb-2" id="month-weekday-headers"></div>
             <div class="grid grid-cols-7 gap-1 md:gap-2" id="month-grid"></div>
         </div>
     </div>
@@ -108,7 +106,10 @@ var editReminderType='once', editItemId=null;
 var tsY=0, tsX=0;
 
 function fmt(d){ if(!d) return ''; return new Date(d).toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit',hour12:(typeof currentLang==='undefined'||currentLang!=='zh')}); }
-function esc(s){ if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+var ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+function esc(s){ return s==null?'':String(s).replace(/[&<>"']/g,function(c){return ESC_MAP[c];}); }
+var WEEKDAY_HEADERS = (function(){ return (typeof currentLang!=='undefined'&&currentLang==='zh') ? ['日','一','二','三','四','五','六'] : ['S','M','T','W','T','F','S']; })();
+function dayName(d,short){ try{ return d.toLocaleDateString(loc(),{weekday:short?'short':'narrow'}); }catch(e){ return ''; } }
 
 // ── Navigation ──
 window.drillDown = function(){
@@ -131,6 +132,14 @@ function applyView(){
     document.getElementById('btn-back').classList.toggle('hidden', idx===0);
     document.getElementById('drill-target').classList.toggle('hidden', idx===3);
     document.getElementById('drill-icon').classList.toggle('hidden', idx===3);
+
+    // Render weekday headers for month view (i18n-aware)
+    var headersEl = document.getElementById('month-weekday-headers');
+    if (headersEl && !headersEl.children.length) {
+        headersEl.innerHTML = WEEKDAY_HEADERS.map(function(h){
+            return '<div class="font-label-sm text-label-sm text-secondary uppercase">'+esc(h)+'</div>';
+        }).join('');
+    }
 
     var titles = {day:'home.today', week:'home.this_week', month:'home.month', year:'home.year'};
     var el = document.getElementById('view-title');
@@ -175,7 +184,7 @@ function renderDay(){
 
     list.innerHTML = items.map(function(item){
         var co = bc[cols[item.type]] || bc.primary;
-        var done = (item.ai_tags||'').indexOf('completed') !== -1;
+        var _tags=[];try{_tags=JSON.parse(item.ai_tags||'[]');}catch(e){}var done=_tags.indexOf('completed')!==-1;
         var strike = done ? 'line-through opacity-60' : '';
         var title = esc((item.content||item.type).slice(0,50));
         var summary = esc((item.ai_summary||(typeof t!=='undefined'?t('home.tap_to_edit'):'Tap to edit')).slice(0,80));
@@ -212,7 +221,7 @@ function renderWeek(){
         html += '<div class="min-h-[100px] flex flex-col p-2 rounded-xl border '+(isToday?'bg-primary text-on-primary shadow-[0_8px_24px_rgba(35,70,213,0.2)] border-transparent':'border-outline-variant/30 bg-surface-container-low/50')+' cursor-pointer hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden" onclick="goToDay(new Date(\''+ds+'\'))">'+
             (isToday?'<div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>':'')+
             '<span class="font-body-lg text-body-lg font-bold text-center relative z-10">'+d.getDate()+'</span>'+
-            '<span class="font-label-sm text-label-sm text-center relative z-10 opacity-70">'+d.toLocaleDateString('en-US',{weekday:'short'})+'</span>'+
+            '<span class="font-label-sm text-label-sm text-center relative z-10 opacity-70">'+esc(dayName(d,true))+'</span>'+
             '<div class="mt-1 flex-1 overflow-hidden relative z-10">'+dayItems.slice(0,2).map(function(item){ return '<div class="text-[10px] leading-tight truncate '+(isToday?'text-white/80':'text-on-surface-variant')+' mb-0.5">'+esc((item.content||'event').slice(0,20))+'</div>'; }).join('')+'</div>'+
             (dayItems.length>2?'<div class="text-[9px] '+(isToday?'text-white/60':'text-primary')+' relative z-10">+'+ (dayItems.length-2) +' more</div>':'')+
         '</div>';
@@ -276,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function(){
             var item = e.target.closest('[id^="item-"]');
             if(!item) return;
             var match = allItems.find(function(i){ return i.id===parseInt(item.id.replace('item-','')); });
-            if(match && (match.ai_tags||'').indexOf('completed')!==-1) return;
+            if(match){var _t=[];try{_t=JSON.parse(match.ai_tags||'[]');}catch(e){}if(_t.indexOf('completed')!==-1)return;}
             el=item; sx=e.touches[0].clientX;
         }, {passive:false});
         dayList.addEventListener('touchmove', function(e){
@@ -335,7 +344,7 @@ window.openEdit = function(id){
     document.getElementById('edit-modal').classList.remove('hidden');
     setEditPriorityBtn('high');
     setReminderType('once');
-    var done = (item.ai_tags||'').indexOf('completed') !== -1;
+    var _et=[];try{_et=JSON.parse(item.ai_tags||'[]');}catch(e){}var done=_et.indexOf('completed')!==-1;
     var btn = document.getElementById('btn-complete');
     btn.innerHTML = done ? '<span class="material-symbols-outlined text-[16px]">close</span> Uncomplete' : '<span class="material-symbols-outlined text-[16px]">check</span> Complete';
     btn.className = done ? 'py-2 px-4 rounded-lg bg-error-container text-on-error-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1' : 'py-2 px-4 rounded-lg bg-tertiary-container text-on-tertiary-container font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1';
@@ -366,10 +375,10 @@ function setEditPriorityBtn(p){
 }
 window.toggleComplete = function(){
     if(!editItemId) return;
-    fetch('/api/items/'+editItemId+'/complete', {method:'POST'}).then(function(){ closeEdit(); loadAll(); });
+    fetch('/api/items/'+editItemId+'/complete', {method:'POST'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); }).then(function(){ closeEdit(); loadAll(); }).catch(function(e){ console.error(e); });
 };
 window.toggleCompleteById = function(id){
-    fetch('/api/items/'+id+'/complete', {method:'POST'}).then(function(){ loadAll(); });
+    fetch('/api/items/'+id+'/complete', {method:'POST'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); }).then(function(){ loadAll(); }).catch(function(e){ console.error(e); });
 };
 window.saveEdit = function(){
     var id = document.getElementById('edit-id').value;
@@ -405,17 +414,17 @@ window.saveEdit = function(){
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({content: title||'Event', ai_summary: summary})
-    }).then(function(){ closeEdit(); loadAll(); });
+    }).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); }).then(function(){ closeEdit(); loadAll(); }).catch(function(e){ console.error(e); });
 };
 window.deleteEvent = function(){
     if(!confirm((typeof t!=='undefined'?t('edit.delete_confirm'):'Delete this event?'))) return;
-    fetch('/api/items/'+editItemId, {method:'DELETE'}).then(function(){ closeEdit(); loadAll(); });
+    fetch('/api/items/'+editItemId, {method:'DELETE'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); }).then(function(){ closeEdit(); loadAll(); }).catch(function(e){ console.error(e); });
 };
 
 // ── Load ──
 function loadAll(){
     fetch('/api/items')
-        .then(function(r){ return r.json(); })
+        .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
         .then(function(items){
             allItems = items;
             anchorDate = new Date();

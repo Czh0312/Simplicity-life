@@ -115,6 +115,6 @@ function updateLangUI() {
 document.addEventListener('i18n-updated', updateLangUI);
 updateLangUI();
 document.getElementById('last-sync').textContent = new Date().toLocaleString(currentLang==='zh'?'zh-CN':'en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-async function clearAllData(){if(!confirm(t('profile.clear_confirm')))return;try{const r=await fetch('/api/items');const items=await r.json();for(const item of items)await fetch(`/api/items/${item.id}`,{method:'DELETE'});location.reload()}catch(e){alert(t('profile.clear_failed'))}}
+async function clearAllData(){if(!confirm(t('profile.clear_confirm')))return;try{const r=await fetch('/api/items',{method:'DELETE',headers:{'X-Confirm':'DELETE_ALL'}});if(!r.ok)throw new Error('HTTP '+r.status);location.reload()}catch(e){console.error('[clearAllData]',e);alert(t('profile.clear_failed'))}}
 </script>
 {% endblock %}

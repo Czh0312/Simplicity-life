@@ -45,16 +45,22 @@ function updateVoiceUI(recording) {
 async function sendVoice(blob) {
     showResult(t('add.processing_voice'));
     const fd = new FormData(); fd.append('audio', blob, 'recording.webm');
-    try { const r = await fetch('/api/process/voice', { method: 'POST', body: fd }); const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary); }
-    catch (e) { showResult(t('add.network_error')); }
+    try {
+        const r = await fetch('/api/process/voice', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary);
+    } catch (e) { showResult(t('add.network_error')); }
 }
 
 async function uploadImage(input) {
     const file = input.files[0]; if (!file) return;
     showResult(t('add.analyzing_image'));
     const fd = new FormData(); fd.append('image', file);
-    try { const r = await fetch('/api/process/image', { method: 'POST', body: fd }); const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary); }
-    catch (e) { showResult(t('add.network_error')); }
+    try {
+        const r = await fetch('/api/process/image', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary);
+    } catch (e) { showResult(t('add.network_error')); }
     input.value = '';
 }
 
@@ -65,8 +71,11 @@ async function pasteLink() {
     if (!url) return;
     if (!url.startsWith('http')) url = 'https://' + url;
     showResult(t('add.analyzing_link'));
-    try { const r = await fetch('/api/process/link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) }); const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary); }
-    catch (e) { showResult(t('add.network_error')); }
+    try {
+        const r = await fetch('/api/process/link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary);
+    } catch (e) { showResult(t('add.network_error')); }
 }
 
 async function sendText() {
@@ -74,8 +83,11 @@ async function sendText() {
     const text = textarea.value.trim(); if (!text) return;
     showResult(t('add.thinking'));
     textarea.value = '';
-    try { const r = await fetch('/api/process/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary); }
-    catch (e) { showResult(t('add.network_error')); }
+    try {
+        const r = await fetch('/api/process/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json(); showResult(data.error ? 'Error: ' + data.error : data.summary);
+    } catch (e) { showResult(t('add.network_error')); }
 }
 
 function showResult(text) {
@@ -89,5 +101,15 @@ function closeResult() { document.getElementById('result-panel').classList.add('
 
 document.addEventListener('DOMContentLoaded', () => {
     const textarea = document.getElementById('text-input');
-    if (textarea) { textarea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } }); }
+    if (textarea) {
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // Only trigger if AI mode is visible — manual mode has its own inputs.
+                const aiMode = document.getElementById('ai-mode');
+                if (aiMode && aiMode.classList.contains('hidden')) return;
+                e.preventDefault();
+                sendText();
+            }
+        });
+    }
 });

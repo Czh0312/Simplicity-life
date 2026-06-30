@@ -304,7 +304,10 @@ function applyTheme() {
 applyTheme();
 
 function t(key) {
-    return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['en'][key]) || key;
+    if (I18N[currentLang] && I18N[currentLang][key]) return I18N[currentLang][key];
+    if (I18N['en'] && I18N['en'][key]) return I18N['en'][key];
+    if (typeof console !== 'undefined') console.warn('[i18n] missing key:', key);
+    return key;
 }
 
 function applyI18n() {

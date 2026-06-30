@@ -280,11 +280,12 @@ async function confirmManual() {
         if (notes) summary += `\nNotes: ${notes}`;
 
         try {
-            await fetch('/api/process/text', {
+            const r = await fetch('/api/process/text', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({text: title + '\n' + summary})
             });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
             count++;
         } catch(e) { console.error(e); }
     }
@@ -294,15 +295,5 @@ async function confirmManual() {
         toggleMode(); // go back to AI mode
     }
 }
-
-// AI mode textarea Enter to send
-document.addEventListener('DOMContentLoaded', () => {
-    const ta = document.getElementById('text-input');
-    if (ta) {
-        ta.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
-        });
-    }
-});
 </script>
 {% endblock %}
